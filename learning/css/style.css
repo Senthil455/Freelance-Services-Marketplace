@@ -4,6 +4,7 @@ body {
   max-width: 800px;
   margin: 0 auto;
   padding: 20px;
+  background: #fafafa;
 }
 
 h1 {
@@ -16,4 +17,25 @@ h2 {
 
 p {
   color: #444;
+}
+
+a {
+  color: #2980b9;
+}
+
+ul {
+  padding-left: 20px;
+}
+
+header {
+  border-bottom: 2px solid #2c3e50;
+  margin-bottom: 20px;
+}
+
+footer {
+  border-top: 1px solid #ddd;
+  margin-top: 30px;
+  padding-top: 10px;
+  font-size: 14px;
+  color: #888;
 }
