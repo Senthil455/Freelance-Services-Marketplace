@@ -1,0 +1,30 @@
+body {
+  font-family: Arial, sans-serif;
+  background: #f5f5f5;
+}
+
+.rgb {
+  color: rgb(41, 128, 185);
+}
+
+.hex {
+  background: #2ecc71;
+  color: #fff;
+  padding: 8px;
+}
+
+.hsl {
+  color: hsl(15, 80%, 45%);
+}
+
+.alpha {
+  background: rgba(231, 76, 60, 0.4);
+  padding: 8px;
+}
+
+.gradient {
+  background: linear-gradient(to right, #3498db, #8e44ad);
+  color: #fff;
+  padding: 20px;
+  border-radius: 6px;
+}
