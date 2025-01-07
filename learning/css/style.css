@@ -39,3 +39,14 @@ footer {
   font-size: 14px;
   color: #888;
 }
+nav ul {
+  list-style: none;
+  display: flex;
+  gap: 20px;
+  padding: 0;
+}
+
+nav a {
+  text-decoration: none;
+  font-weight: bold;
+}
