@@ -1,0 +1,25 @@
+label {
+  display: inline-block;
+  width: 90px;
+  font-weight: bold;
+}
+
+input, textarea {
+  padding: 6px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: inherit;
+}
+
+button {
+  background: #2980b9;
+  color: #fff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #1f6fa5;
+}
