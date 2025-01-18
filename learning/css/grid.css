@@ -1,12 +1,16 @@
 .grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 2fr;
   gap: 16px;
 }
 
-.grid .cell {
+.cell {
   border: 1px solid #ddd;
   border-radius: 8px;
   padding: 16px;
   background: #fff;
+}
+
+.wide {
+  grid-column: span 2;
 }
