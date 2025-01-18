@@ -33,3 +33,14 @@
   padding: 24px;
   text-align: center;
 }
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 260px;
+  background: linear-gradient(to right, #3498db, #8e44ad);
+  color: #fff;
+  border-radius: 8px;
+  margin-top: 20px;
+}
