@@ -1,5 +1,5 @@
 :root {
-  --primary: #2563eb;
+  --primary: #7c3aed;
   --dark: #0f172a;
   --light: #f8fafc;
   --radius: 10px;
@@ -74,7 +74,7 @@ nav a:hover {
 }
 
 .btn:hover {
-  background: #1d4ed8;
+  background: #6d28d9;
 }
 
 section {
