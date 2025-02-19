@@ -1,10 +1,10 @@
-# JavaScript notes
+# JavaScript notes (continued)
 
-- variables: let and const
-- strings: methods and template strings
-- operators and conditionals
-- loops
-- arrays and objects
-- functions
-- dom and events
-- async and fetch
+- dom manipulation and events
+- forms and input handling
+- localStorage for persistence
+- timers
+- fetch api and promises
+- async and await
+- classes
+- higher order array methods (map, filter, reduce)
