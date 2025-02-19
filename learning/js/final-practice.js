@@ -1,4 +1,6 @@
-// combining everything: process a list of gigs
+// combining everything
+// (small tidy up)
+// process a list of gigs
 let gigs = [
   { title: 'Website design', price: 1500, rating: 4.8 },
   { title: 'Logo design', price: 400, rating: 4.5 },
