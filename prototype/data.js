@@ -1,3 +1,5 @@
+var categories = ['all', 'design', 'development', 'writing', 'marketing', 'video'];
+
 var gigs = [
   { id: 1, title: 'Modern website design', category: 'design', price: 1500, rating: 4.8, img: 'https://picsum.photos/seed/g1/400/250' },
   { id: 2, title: 'Logo design in 24 hours', category: 'design', price: 400, rating: 4.6, img: 'https://picsum.photos/seed/g2/400/250' },
