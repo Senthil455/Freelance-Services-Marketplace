@@ -43,6 +43,8 @@ function renderGigs() {
   var grid = document.getElementById('gigs');
   grid.innerHTML = '';
   var list = sortedGigs();
+  var count = document.getElementById('count');
+  count.textContent = list.length + ' gigs found';
   if (list.length === 0) {
     grid.innerHTML = '<p class=\'empty\'>no gigs match your search</p>';
     return;
