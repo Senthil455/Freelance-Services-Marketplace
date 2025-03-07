@@ -20,6 +20,9 @@
 <header class="hero">
   <h1>Find the right freelancer for your project</h1>
   <p>Design, development, writing and more.</p>
+  <div class="search-box">
+    <input id="search" type="text" placeholder="search gigs... (press / to focus)">
+  </div>
 </header>
 
 <section class="section">
@@ -29,12 +32,25 @@
 
 <section class="section">
   <h2>Popular gigs</h2>
-  <div id="gigs"></div>
+  <p class="count" id="count"></p>
+  <div class="sort-row">
+    <label for="sort">Sort by</label>
+    <select id="sort">
+      <option value="recommended">Recommended</option>
+      <option value="price-low">Price: low to high</option>
+      <option value="price-high">Price: high to low</option>
+      <option value="rating">Rating</option>
+    </select>
+  </div>
+  <div class="grid" id="gigs"></div>
 </section>
 
 <footer>
   <p>&copy; 2025 SkillForge</p>
 </footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
 
 
 </body>
