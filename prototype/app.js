@@ -52,7 +52,13 @@ function renderGigs() {
     var card = document.createElement('a');
     card.className = 'card';
     card.href = 'gig.html?id=' + g.id;
-    var img = document.createElement('img');
+    if (g.isNew) {
+    var badge = document.createElement('span');
+    badge.className = 'badge';
+    badge.textContent = 'NEW';
+    card.appendChild(badge);
+  }
+  var img = document.createElement('img');
     img.src = g.img;
     img.alt = g.title;
     var title = document.createElement('h3');
