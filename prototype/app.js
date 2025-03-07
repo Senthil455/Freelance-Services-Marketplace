@@ -46,7 +46,7 @@ function renderGigs() {
   var count = document.getElementById('count');
   count.textContent = list.length + ' gigs found';
   if (list.length === 0) {
-    grid.innerHTML = '<p class=\'empty\'>no gigs match your search</p>';
+    grid.innerHTML = '<p class=\'empty\'>no gigs match your search - try another keyword</p>';
     return;
   }
   for (var i = 0; i < list.length; i++) {
