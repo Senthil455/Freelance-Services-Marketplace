@@ -1,0 +1,42 @@
+.detail {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 0 20px;
+}
+
+.detail img {
+  width: 100%;
+  max-height: 360px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.detail .meta {
+  color: #64748b;
+}
+
+.detail .price {
+  font-size: 26px;
+  color: #2563eb;
+  font-weight: bold;
+}
+
+.buy {
+  background: #4f46e5;
+  color: #fff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.buy:hover {
+  background: #4338ca;
+}
+
+.empty {
+  text-align: center;
+  color: #64748b;
+  padding: 60px;
+}
