@@ -9,4 +9,4 @@ Features:
 - sorting by price or rating
 - a gig detail page reading the id from the url
 
-This is not a real backend. The real app comes next with Node and Express.
+This is not a real backend. The real app comes next with Node and Express. Built March 2025.
