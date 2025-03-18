@@ -1,9 +1,22 @@
 import express from 'express';
+import helmet from 'helmet';
+import cors from 'cors';
 import { config } from './config/index.js';
 import { notFound, errorHandler } from './utils/errors.js';
 
 const app = express();
 
+app.use(
+  helmet({
+    crossOriginResourcePolicy: { policy: 'cross-origin' },
+  })
+);
+app.use(
+  cors({
+    origin: config.clientUrl,
+    credentials: true,
+  })
+);
 app.use(express.json({ limit: '2mb' }));
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
