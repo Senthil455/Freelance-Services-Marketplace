@@ -4,7 +4,10 @@ import cors from 'cors';
 import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import { config } from './config/index.js';
+import { connectDB } from './config/db.js';
 import { notFound, errorHandler } from './utils/errors.js';
+
+connectDB();
 
 const app = express();
 
