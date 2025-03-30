@@ -2,6 +2,7 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
+import cookieParser from 'cookie-parser';
 import { config } from './config/index.js';
 import { notFound, errorHandler } from './utils/errors.js';
 
@@ -20,6 +21,7 @@ app.use(
 );
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '2mb' }));
+app.use(cookieParser());
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
 
