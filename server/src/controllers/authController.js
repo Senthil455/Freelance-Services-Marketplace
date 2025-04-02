@@ -14,6 +14,9 @@ export const register = asyncHandler(async (req, res) => {
   const { name, email, password, role } = req.body;
   if (!name || !email || !password) throw new AppError('Name, email and password are required', 400);
 
+  const exists = await User.findOne({ email: email.toLowerCase().trim() });
+  if (exists) throw new AppError('An account with this email already exists', 409);
+
   const user = await User.create({ name, email, password, role: role === 'seller' ? 'seller' : 'buyer' });
   const token = generateToken(user._id);
   sendTokenCookie(res, token);
@@ -27,6 +30,9 @@ export const login = asyncHandler(async (req, res) => {
   const user = await User.findOne({ email: email.toLowerCase().trim() }).select('+password');
   if (!user || !(await user.matchPassword(password))) {
     throw new AppError('Invalid email or password', 401);
+  }
+  if (user.accountStatus === 'suspended') {
+    throw new AppError('This account has been suspended. Contact support.', 403);
   }
 
   const token = generateToken(user._id);
