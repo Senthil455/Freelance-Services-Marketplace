@@ -1,4 +1,7 @@
 import express from 'express';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
 import helmet from 'helmet';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -6,6 +9,8 @@ import cookieParser from 'cookie-parser';
 import { config } from './config/index.js';
 import { connectDB } from './config/db.js';
 import { notFound, errorHandler } from './utils/errors.js';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 connectDB();
 
@@ -25,6 +30,10 @@ app.use(
 app.use(morgan(config.nodeEnv === 'production' ? 'combined' : 'dev'));
 app.use(express.json({ limit: '2mb' }));
 app.use(cookieParser());
+
+const uploadsDir = path.resolve(config.uploadDir || 'uploads');
+fs.mkdirSync(uploadsDir, { recursive: true });
+app.use('/uploads', express.static(uploadsDir));
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
 
