@@ -7,6 +7,15 @@ const sanitize = (user) => ({
   name: user.name,
   email: user.email,
   role: user.role,
+  avatar: user.avatar,
+  tagline: user.tagline,
+  bio: user.bio,
+  location: user.location,
+  languages: user.languages,
+  skills: user.skills,
+  isSeller: user.isSeller,
+  verifiedSeller: user.verifiedSeller,
+  accountStatus: user.accountStatus,
   createdAt: user.createdAt,
 });
 
