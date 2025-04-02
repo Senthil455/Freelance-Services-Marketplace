@@ -78,3 +78,32 @@ export const updateProfile = asyncHandler(async (req, res) => {
   await user.save();
   res.json({ success: true, user: sanitize(user) });
 });
+
+export const becomeSeller = asyncHandler(async (req, res) => {
+  const user = req.user;
+  if (user.role === 'admin') throw new AppError('Admin accounts cannot become sellers', 400);
+  user.isSeller = true;
+  user.role = 'seller';
+  await user.save();
+  res.json({ success: true, user: sanitize(user) });
+});
+
+export const changePassword = asyncHandler(async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  if (!currentPassword || !newPassword) throw new AppError('Current and new password are required', 400);
+  if (newPassword.length < 8) throw new AppError('New password must be at least 8 characters', 400);
+
+  const user = await User.findById(req.user._id).select('+password');
+  if (!(await user.matchPassword(currentPassword))) throw new AppError('Current password is incorrect', 400);
+
+  user.password = newPassword;
+  await user.save();
+  res.json({ success: true, message: 'Password updated successfully' });
+});
+
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) throw new AppError('No file uploaded', 400);
+  req.user.avatar = toPublicUrl(req.file.path);
+  await req.user.save();
+  res.json({ success: true, avatar: req.user.avatar });
+});
