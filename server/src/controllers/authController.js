@@ -1,6 +1,7 @@
 import User from '../models/User.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
 import { generateToken, sendTokenCookie } from '../utils/token.js';
+import { toPublicUrl } from '../middleware/upload.js';
 
 const sanitize = (user) => ({
   id: user._id,
@@ -56,4 +57,24 @@ export const logout = asyncHandler(async (req, res) => {
 
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, user: sanitize(req.user) });
+});
+
+export const updateProfile = asyncHandler(async (req, res) => {
+  const { name, tagline, bio, location, languages, skills, education, employment } = req.body;
+  const user = req.user;
+
+  if (name !== undefined) user.name = name.trim();
+  if (tagline !== undefined) user.tagline = tagline;
+  if (bio !== undefined) user.bio = bio;
+  if (location !== undefined) user.location = location;
+  if (languages !== undefined) user.languages = Array.isArray(languages) ? languages : [];
+  if (skills !== undefined) user.skills = Array.isArray(skills) ? skills.slice(0, 20) : [];
+  if (education !== undefined) user.education = Array.isArray(education) ? education : user.education;
+  if (employment !== undefined) user.employment = Array.isArray(employment) ? employment : user.employment;
+
+  if (req.file) user.avatar = toPublicUrl(req.file.path);
+  if (req.body.coverImageUrl) user.coverImage = req.body.coverImageUrl;
+
+  await user.save();
+  res.json({ success: true, user: sanitize(user) });
 });
