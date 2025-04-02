@@ -10,6 +10,7 @@ import rateLimit from 'express-rate-limit';
 import { config } from './config/index.js';
 import { connectDB } from './config/db.js';
 import { notFound, errorHandler } from './utils/errors.js';
+import userRoutes from './routes/userRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -47,6 +48,7 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api', apiLimiter);
+app.use('/api/users', userRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
 
