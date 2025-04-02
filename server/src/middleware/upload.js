@@ -34,3 +34,9 @@ export const upload = multer({
   fileFilter,
   limits: { fileSize: config.maxFileSizeMb * 1024 * 1024 },
 });
+
+export const toPublicUrl = (filePath) => {
+  if (!filePath) return null;
+  const normalized = filePath.split(path.sep).join('/');
+  return `/uploads/${normalized.replace(/^uploads\//, '')}`;
+};
