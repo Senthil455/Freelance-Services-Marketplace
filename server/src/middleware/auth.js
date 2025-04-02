@@ -1,6 +1,7 @@
 import { AppError, asyncHandler } from '../utils/errors.js';
 import { verifyToken } from '../utils/token.js';
 import User from '../models/User.js';
+import mongoose from 'mongoose';
 
 export const protect = asyncHandler(async (req, res, next) => {
   let token;
@@ -15,6 +16,8 @@ export const protect = asyncHandler(async (req, res, next) => {
   } catch {
     throw new AppError('Session expired, please sign in again', 401);
   }
+
+  if (!mongoose.isValidObjectId(decoded.id)) throw new AppError('Invalid session', 401);
 
   const user = await User.findById(decoded.id);
   if (!user) throw new AppError('User no longer exists', 401);
