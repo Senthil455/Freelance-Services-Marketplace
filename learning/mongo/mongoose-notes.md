@@ -5,5 +5,6 @@
 - Common field types: String, Number, Boolean, Date, ObjectId, [String].
 - `model('User', userSchema)` -> `users` collection.
 - Queries: `find`, `findOne`, `findById`, `create`, `save`, `deleteOne`.
+- `populate('seller')` replaces ObjectIds with the full documents.
 - `select('+password')` is needed for fields with `select: false`.
 - Middleware hooks like `pre('save')` run before saving.
