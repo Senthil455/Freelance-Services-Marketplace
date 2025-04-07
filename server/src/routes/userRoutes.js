@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, logout, me, updateProfile, becomeSeller } from '../controllers/authController.js';
+import { register, login, logout, me, updateProfile, becomeSeller, changePassword } from '../controllers/authController.js';
 import { protect } from '../middleware/auth.js';
 import { upload } from '../middleware/upload.js';
 
@@ -11,5 +11,6 @@ router.post('/logout', logout);
 router.get('/me', protect, me);
 router.put('/profile', protect, upload.single('avatar'), updateProfile);
 router.post('/become-seller', protect, becomeSeller);
+router.put('/change-password', protect, changePassword);
 
 export default router;
