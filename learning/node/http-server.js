@@ -1,6 +1,3 @@
-// Very small example of a plain Node http server.
-// No framework involved - the request handler gets req and res.
-
 const http = require('http');
 
 const server = http.createServer((req, res) => {
