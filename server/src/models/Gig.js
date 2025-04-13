@@ -51,12 +51,47 @@ const gigSchema = new mongoose.Schema(
     requirements: { type: [String], default: [] },
     faqs: [{ question: { type: String, maxlength: 300 }, answer: { type: String, maxlength: 1000 } }],
     active: { type: Boolean, default: true },
+    featured: { type: Boolean, default: false },
+    sales: { type: Number, default: 0 },
+    views: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 },
+    ratingCount: { type: Number, default: 0 },
+    responses: { type: Number, default: 0 },
+    lastOrderAt: Date,
   },
   { timestamps: true }
 );
+
+gigSchema.index({ title: 'text', description: 'text', tags: 'text', category: 'text', subCategory: 'text' });
+gigSchema.index({ category: 1, active: 1, sales: -1 });
 
 gigSchema.methods.staringPrice = function () {
   return this.packages.basic.price;
 };
 
-export default mongoose.model('Gig', gigSchema);
+const Gig = mongoose.model('Gig', gigSchema);
+
+export const searchGigs = async (query, options = {}) => {
+  const { page = 1, limit = 20, sort = 'relevance' } = options;
+  const sortMap = {
+    relevance: { score: { $meta: 'textScore' } },
+    newest: { createdAt: -1 },
+    priceLow: { 'packages.basic.price': 1 },
+    priceHigh: { 'packages.basic.price': -1 },
+    bestSellers: { sales: -1 },
+    topRated: { rating: -1 },
+    favorite: { ratingCount: -1 },
+  };
+  const sortBy = sortMap[sort] || sortMap.relevance;
+
+  const count = await Gig.countDocuments(query);
+  const gigs = await Gig.find(query, sort === 'relevance' && query.$text ? { score: { $meta: 'textScore' } } : {})
+    .sort(sortBy)
+    .skip((page - 1) * limit)
+    .limit(limit)
+    .populate('seller', 'name avatar tagline verifiedSeller location');
+
+  return { gigs, count, totalPages: Math.ceil(count / limit) || 1 };
+};
+
+export default Gig;
