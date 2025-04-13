@@ -1,5 +1,7 @@
 import mongoose from 'mongoose';
 
+export const ORDER_STATUS = ['pending', 'in_progress', 'delivered', 'completed', 'cancelled', 'revision', 'disputed'];
+
 const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true, required: true },
@@ -13,9 +15,21 @@ const orderSchema = new mongoose.Schema(
     price: { type: Number, required: true, min: 0 },
     deliveryDays: { type: Number, required: true, min: 1 },
     revisions: { type: Number, default: 0 },
-    status: { type: String, default: 'pending' },
+    serviceFee: { type: Number, default: 0 },
+    total: { type: Number, required: true },
+    status: { type: String, enum: ORDER_STATUS, default: 'pending' },
     requirements: { type: String, default: '' },
+    requirementsAttachments: [String],
+    deliveredWork: {
+      message: String,
+      files: [String],
+      deliveredAt: Date,
+    },
     deadline: Date,
+    buyerNote: String,
+    sellerNote: String,
+    completedAt: Date,
+    reviewed: { type: Boolean, default: false },
   },
   { timestamps: true }
 );
