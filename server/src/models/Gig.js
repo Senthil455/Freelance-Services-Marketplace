@@ -33,8 +33,11 @@ const gigSchema = new mongoose.Schema(
       minlength: [30, 'Description must be at least 30 characters'],
     },
     category: { type: String, required: true },
+    subCategory: { type: String, default: '' },
     tags: { type: [String], default: [], validate: { validator: (v) => v.length <= 5, message: 'Max 5 tags' } },
     images: { type: [String], default: [] },
+    videoThumbnail: String,
+    seoTitle: String,
     packages: {
       type: { basic: packageSchema, standard: packageSchema, premium: packageSchema },
       required: true,
@@ -45,6 +48,8 @@ const gigSchema = new mongoose.Schema(
         message: 'All three packages (basic, standard, premium) are required',
       },
     },
+    requirements: { type: [String], default: [] },
+    faqs: [{ question: { type: String, maxlength: 300 }, answer: { type: String, maxlength: 1000 } }],
     active: { type: Boolean, default: true },
   },
   { timestamps: true }
