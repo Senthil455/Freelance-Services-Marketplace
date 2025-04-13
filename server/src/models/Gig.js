@@ -18,6 +18,8 @@ const gigSchema = new mongoose.Schema(
       minlength: [30, 'Description must be at least 30 characters'],
     },
     category: { type: String, required: true },
+    tags: { type: [String], default: [], validate: { validator: (v) => v.length <= 5, message: 'Max 5 tags' } },
+    images: { type: [String], default: [] },
     price: { type: Number, required: true, min: [5, 'Minimum price is $5'], max: [100000, 'Price too high'] },
     deliveryDays: { type: Number, required: true, min: 1, max: 90 },
     active: { type: Boolean, default: true },
