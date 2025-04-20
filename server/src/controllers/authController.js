@@ -1,4 +1,5 @@
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
 import { generateToken, sendTokenCookie } from '../utils/token.js';
 import { toPublicUrl } from '../middleware/upload.js';
@@ -17,6 +18,10 @@ const sanitize = (user) => ({
   isSeller: user.isSeller,
   verifiedSeller: user.verifiedSeller,
   accountStatus: user.accountStatus,
+  twoFactorEnabled: user.twoFactorEnabled,
+  education: user.education,
+  employment: user.employment,
+  stats: user.stats,
   createdAt: user.createdAt,
 });
 
@@ -58,6 +63,14 @@ export const logout = asyncHandler(async (req, res) => {
 export const me = asyncHandler(async (req, res) => {
   res.json({ success: true, user: sanitize(req.user) });
 });
+
+export const notify = async (userId, title, body = '', link = '', type = 'system') => {
+  try {
+    await Notification.create({ user: userId, title, body, link, type });
+  } catch (err) {
+    console.error('Failed to create notification:', err.message);
+  }
+};
 
 export const updateProfile = asyncHandler(async (req, res) => {
   const { name, tagline, bio, location, languages, skills, education, employment } = req.body;
