@@ -19,6 +19,17 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     role: { type: String, enum: ['buyer', 'seller', 'admin'], default: 'buyer' },
+    avatar: { type: String, default: '' },
+    coverImage: { type: String, default: '' },
+    tagline: { type: String, default: '' },
+    bio: { type: String, default: '', maxlength: [3000, 'Bio is too long'] },
+    location: { type: String, default: '' },
+    languages: [{ name: String, level: String }],
+    skills: { type: [String], default: [] },
+    verifiedSeller: { type: Boolean, default: false },
+    isSeller: { type: Boolean, default: false },
+    twoFactorEnabled: { type: Boolean, default: false },
+    accountStatus: { type: String, enum: ['active', 'suspended'], default: 'active' },
   },
   {
     timestamps: true,
@@ -37,5 +48,14 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.matchPassword = async function (entered) {
   return bcrypt.compare(entered, this.password);
 };
+
+const publicProfileProjection = {
+  password: 0,
+  favorites: 0,
+  resetPasswordToken: 0,
+  resetPasswordExpire: 0,
+};
+
+export const PUBLIC_PROFILE_PROJECTION = publicProfileProjection;
 
 export default mongoose.model('User', userSchema);
