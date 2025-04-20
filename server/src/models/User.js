@@ -1,6 +1,28 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
+const educationSchema = new mongoose.Schema(
+  {
+    school: { type: String, required: true },
+    degree: { type: String, required: true },
+    field: { type: String, default: '' },
+    startYear: { type: Number, required: true },
+    endYear: { type: Number, default: null },
+  },
+  { _id: true }
+);
+
+const employmentSchema = new mongoose.Schema(
+  {
+    company: { type: String, required: true },
+    title: { type: String, required: true },
+    description: { type: String, default: '' },
+    startDate: { type: String, required: true },
+    endDate: { type: String, default: '' },
+  },
+  { _id: true }
+);
+
 const userSchema = new mongoose.Schema(
   {
     name: { type: String, required: [true, 'Name is required'], trim: true, maxlength: [50, 'Name too long'] },
@@ -26,10 +48,23 @@ const userSchema = new mongoose.Schema(
     location: { type: String, default: '' },
     languages: [{ name: String, level: String }],
     skills: { type: [String], default: [] },
+    education: [educationSchema],
+    employment: [employmentSchema],
     verifiedSeller: { type: Boolean, default: false },
     isSeller: { type: Boolean, default: false },
     twoFactorEnabled: { type: Boolean, default: false },
     accountStatus: { type: String, enum: ['active', 'suspended'], default: 'active' },
+    favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Gig' }],
+    resetPasswordToken: String,
+    resetPasswordExpire: Date,
+    stats: {
+      ordersCompleted: { type: Number, default: 0 },
+      totalEarnings: { type: Number, default: 0 },
+      onTimeDelivery: { type: Number, default: 0 },
+      responseTime: { type: Number, default: 12 }, // hours
+      averageResponseTime: { type: Number, default: 12 },
+    },
+    stripeAccountId: String,
   },
   {
     timestamps: true,
