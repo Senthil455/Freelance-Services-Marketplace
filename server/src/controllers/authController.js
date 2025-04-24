@@ -129,3 +129,33 @@ export const getPublicProfile = asyncHandler(async (req, res) => {
 
   res.json({ success: true, profile: user });
 });
+
+export const toggleFavorite = asyncHandler(async (req, res) => {
+  const { gigId } = req.body;
+  const Gig = (await import('../models/Gig.js')).default;
+  if (!gigId) throw new AppError('Gig id is required', 400);
+
+  const user = req.user;
+  const idx = user.favorites.findIndex((id) => id.toString() === gigId);
+  if (idx >= 0) {
+    user.favorites.splice(idx, 1);
+    await user.save();
+    return res.json({ success: true, isFavorite: false, favorites: user.favorites });
+  }
+  const gig = await Gig.findById(gigId);
+  if (!gig) throw new AppError('Gig not found', 404);
+  user.favorites.push(gigId);
+  await user.save();
+  res.json({ success: true, isFavorite: true, favorites: user.favorites });
+});
+
+export const getFavorites = asyncHandler(async (req, res) => {
+  const Gig = (await import('../models/Gig.js')).default;
+  const gigs = await Gig.find({ _id: { $in: req.user.favorites }, active: true })
+    .select('title images category packages.basic.price packages.standard.price packages.premium.price rating ratingCount sales seller deliverTime views createdAt')
+    .select('-packages.basic.description -packages.standard.description -packages.premium.description')
+    .populate('seller', 'name avatar tagline verifiedSeller')
+    .lean();
+
+  res.json({ success: true, gigs });
+});
