@@ -114,13 +114,6 @@ export const changePassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'Password updated successfully' });
 });
 
-export const uploadAvatar = asyncHandler(async (req, res) => {
-  if (!req.file) throw new AppError('No file uploaded', 400);
-  req.user.avatar = toPublicUrl(req.file.path);
-  await req.user.save();
-  res.json({ success: true, avatar: req.user.avatar });
-});
-
 export const getPublicProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.params.id)
     .select('name avatar tagline bio location languages skills education employment verifiedSeller isSeller stats createdAt memberSince')
@@ -158,4 +151,23 @@ export const getFavorites = asyncHandler(async (req, res) => {
     .lean();
 
   res.json({ success: true, gigs });
+});
+
+export const uploadAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) throw new AppError('No file uploaded', 400);
+  req.user.avatar = toPublicUrl(req.file.path);
+  await req.user.save();
+  res.json({ success: true, avatar: req.user.avatar });
+});
+
+export const deleteAccount = asyncHandler(async (req, res) => {
+  const user = req.user;
+  const { email } = req.body;
+  if (!email || email.toLowerCase().trim() !== user.email) {
+    throw new AppError('Email does not match your account', 400);
+  }
+  await Notification.deleteMany({ user: user._id });
+  await user.deleteOne();
+  res.clearCookie('token');
+  res.json({ success: true, message: 'Account deleted' });
 });
