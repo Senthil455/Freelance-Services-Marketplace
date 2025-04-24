@@ -120,3 +120,12 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
   await req.user.save();
   res.json({ success: true, avatar: req.user.avatar });
 });
+
+export const getPublicProfile = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id)
+    .select('name avatar tagline bio location languages skills education employment verifiedSeller isSeller stats createdAt memberSince')
+    .lean();
+  if (!user) throw new AppError('User not found', 404);
+
+  res.json({ success: true, profile: user });
+});
