@@ -6,3 +6,5 @@
 - Errors flow to a central error handler instead of try/catch everywhere.
 - Auth uses an httpOnly cookie so the browser sends the token automatically.
 - Multer handles uploads; files are stored on disk under the uploads folder.
+- Resource routes (gigs, orders, categories) live in their own route files.
+- Bigger flows use a status machine (orders) and aggregate queries (ratings).
