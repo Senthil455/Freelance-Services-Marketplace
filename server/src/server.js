@@ -11,6 +11,9 @@ import { config } from './config/index.js';
 import { connectDB } from './config/db.js';
 import { notFound, errorHandler } from './utils/errors.js';
 import userRoutes from './routes/userRoutes.js';
+import gigRoutes from './routes/gigRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+import categoryRoutes from './routes/categoryRoutes.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -49,6 +52,9 @@ app.use('/uploads', express.static(uploadsDir));
 
 app.use('/api', apiLimiter);
 app.use('/api/users', userRoutes);
+app.use('/api/gigs', gigRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/categories', categoryRoutes);
 
 app.get('/api/health', (req, res) => res.json({ success: true, message: 'API is healthy' }));
 
