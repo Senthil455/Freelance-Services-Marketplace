@@ -1,14 +1,45 @@
 import Gig from '../models/Gig.js';
+import Order from '../models/Order.js';
+import Review from '../models/Review.js';
+import User from '../models/User.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
 import { toPublicUrl } from '../middleware/upload.js';
+import { notify } from './authController.js';
 import mongoose from 'mongoose';
 
 export const browseGigs = asyncHandler(async (req, res) => {
-  const { category, subCategory, min, max, minRating, deliveryTime, sort = 'relevance' } = req.query;
+  const { q, category, subCategory, min, max, minRating, deliveryTime, sort = 'relevance', type = 'gigs', sellerId } = req.query;
   const page = Math.max(1, parseInt(req.query.page) || 1);
   const limit = Math.min(48, parseInt(req.query.limit) || 24);
 
   const conditions = { active: true };
+  if (sellerId && mongoose.isValidObjectId(sellerId)) conditions.seller = sellerId;
+
+  if (type === 'services') {
+    conditions.$or = [];
+
+    const sellerIds = await User.find(
+      { $or: [{ name: { $regex: q ? new RegExp(q, 'i') : /./ } }, { tagline: { $regex: q ? new RegExp(q, 'i') : /./ } }, { bio: { $regex: q ? new RegExp(q, 'i') : /./ } }] },
+      '_id'
+    ).select('_id').lean();
+
+    if (sellerIds.length) conditions.$or.push({ seller: { $in: sellerIds.map((s) => s._id) } });
+
+    if (q) {
+      conditions.$or.push(
+        { title: { $regex: new RegExp(q, 'i') } },
+        { description: { $regex: new RegExp(q, 'i') } },
+        { tags: { $regex: new RegExp(q, 'i') } },
+        { category: { $regex: new RegExp(q, 'i') } },
+        { subCategory: { $regex: new RegExp(q, 'i') } }
+      );
+    } else {
+      conditions.$or.push({ sales: { $gt: 0 } });
+    }
+  } else if (q) {
+    conditions.$text = { $search: q };
+  }
+
   if (subCategory) conditions.subCategory = subCategory;
   else if (category && category !== 'All') conditions.category = category;
 
@@ -22,7 +53,7 @@ export const browseGigs = asyncHandler(async (req, res) => {
   }
 
   const sortMap = {
-    relevance: { sales: -1 },
+    relevance: q ? { score: { $meta: 'textScore' } } : { sales: -1 },
     newest: { createdAt: -1 },
     priceLow: { 'packages.basic.price': 1 },
     priceHigh: { 'packages.basic.price': -1 },
@@ -31,19 +62,25 @@ export const browseGigs = asyncHandler(async (req, res) => {
     favorite: { ratingCount: -1 },
   };
 
-  const gigs = await Gig.find(conditions)
-    .sort(sortMap[sort] || { sales: -1 })
-    .skip((page - 1) * limit)
-    .limit(limit)
-    .populate('seller', 'name avatar tagline verifiedSeller location')
-    .lean();
+  const baseProjection =
+    'title images category subCategory packages.basic.price packages.standard.price packages.premium.price rating ratingCount sales views responses featured active createdAt seller';
+  const projection = q && conditions.$text && sort === 'relevance' ? { ...baseProjection.split(' ').reduce((acc, f) => ({ ...acc, [f]: 1 }), {}), score: { $meta: 'textScore' } } : {};
 
-  const total = await Gig.countDocuments(conditions);
+  const [gigs, count] = await Promise.all([
+    Gig.find(conditions, projection && q && sort === 'relevance' ? projection : '-description -requirements -faqs -seoTitle')
+      .sort(sortMap[sort] || { sales: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .populate('seller', 'name avatar tagline verifiedSeller location')
+      .lean(),
+    Gig.countDocuments(conditions),
+  ]);
+
   res.json({
     success: true,
     gigs,
-    total,
-    totalPages: Math.ceil(total / limit) || 1,
+    total: count,
+    totalPages: Math.ceil(count / limit) || 1,
     page,
     limit,
   });
@@ -54,17 +91,65 @@ export const getGig = asyncHandler(async (req, res) => {
   if (!mongoose.isValidObjectId(id)) throw new AppError('Invalid gig id', 400);
 
   const gig = await Gig.findByIdAndUpdate(id, { $inc: { views: 1 } }, { new: true })
-    .populate('seller', 'name avatar tagline bio location languages skills verifiedSeller isSeller stats createdAt education employment')
+    .populate(
+      'seller',
+      'name avatar tagline bio location languages skills verifiedSeller isSeller stats createdAt education employment'
+    )
     .lean();
   if (!gig) throw new AppError('Gig not found', 404);
 
-  res.json({ success: true, gig });
+  const reviews = await Review.find({ gig: id })
+    .populate('reviewer', 'name avatar')
+    .sort({ createdAt: -1 })
+    .limit(6)
+    .lean();
+
+  const ratingBreakdown = await Review.aggregate([
+    { $match: { gig: new mongoose.Types.ObjectId(id) } },
+    { $group: { _id: '$rating', count: { $sum: 1 } } },
+  ]);
+
+  const related = await Gig.find({
+    active: true,
+    category: gig.category,
+    _id: { $ne: id },
+  })
+    .select('title images packages.basic.price rating ratingCount sales seller slug createdAt')
+    .sort({ sales: -1 })
+    .limit(4)
+    .populate('seller', 'name avatar tagline verifiedSeller')
+    .lean();
+
+  const msDelivered = await Order.find({
+    seller: gig.seller._id,
+    status: 'completed',
+    completedAt: { $gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
+  }).countDocuments();
+
+  res.json({
+    success: true,
+    gig,
+    reviews,
+    ratingBreakdown,
+    related,
+    sellerMonthlyDeliveries: msDelivered,
+  });
 });
 
 export const createGig = asyncHandler(async (req, res) => {
   if (req.user.role === 'buyer') throw new AppError('Become a seller to create gigs', 403);
 
-  const { title, description, category, subCategory, tags, packages, requirements, faqs, seoTitle } = req.body;
+  const {
+    title,
+    description,
+    category,
+    subCategory,
+    tags,
+    packages,
+    requirements,
+    faqs,
+    seoTitle,
+  } = req.body;
 
   const parsed = JSON.parse(packages);
   if (!parsed?.basic || !parsed?.standard || !parsed?.premium) {
