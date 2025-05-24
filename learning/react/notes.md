@@ -5,4 +5,5 @@
 - State with useState, side effects with useEffect.
 - Props flow down from parent to child and are read only.
 - Hooks must be called at the top level, not inside conditions or loops.
+- Lists need a stable key prop so React can track items.
 - Re-renders happen when state or props change; React reconciles the virtual dom.
