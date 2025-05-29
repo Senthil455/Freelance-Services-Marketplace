@@ -19,6 +19,13 @@ export default {
           950: '#142557',
         },
       },
+      fontFamily: {
+        sans: ['Inter', 'system-ui', '-apple-system', 'Segoe UI', 'Roboto', 'sans-serif'],
+      },
+      boxShadow: {
+        card: '0 1px 3px rgba(0,0,0,0.08), 0 4px 14px rgba(0,0,0,0.05)',
+        lift: '0 6px 20px rgba(0,0,0,0.12)',
+      },
     },
   },
   plugins: [],
