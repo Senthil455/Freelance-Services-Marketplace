@@ -1,3 +1,5 @@
-export default function Spinner({ size = 20 }) {
-  return <span className="h-5 w-5 animate-spin rounded-full border-2 border-brand-200 border-t-brand-600" />;
+import { Loader2 } from 'lucide-react';
+
+export default function Spinner({ size = 20, className = '' }) {
+  return <Loader2 size={size} className={`animate-spin text-brand-600 ${className}`} />;
 }
