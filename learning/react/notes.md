@@ -7,3 +7,6 @@
 - Hooks must be called at the top level, not inside conditions or loops.
 - Lists need a stable key prop so React can track items.
 - Re-renders happen when state or props change; React reconciles the virtual dom.
+- The client lives in client/ and mirrors the api in server/.
+  - main.jsx is the entry point, App.jsx owns the routes.
+  - store/ holds the redux slices, api/ wraps axios, pages/ are route components.
