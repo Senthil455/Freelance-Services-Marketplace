@@ -5,3 +5,15 @@
 - Reducers are pure functions: same state + action -> same next state.
 - Toolkit uses immer under the hood, so reducers can mutate state directly.
 - Async logic goes in thunks created with createAsyncThunk.
+
+Example slice:
+
+  const ui = createSlice({
+    name: "ui",
+    initialState: { favorites: [] },
+    reducers: {
+      addFavorite: (state, action) => {
+        state.favorites.push(action.payload);
+      },
+    },
+  });
