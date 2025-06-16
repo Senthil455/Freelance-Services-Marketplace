@@ -2,26 +2,39 @@ import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import {
-  ChevronDown, LayoutDashboard, LogOut, Megaphone, MessageSquare,
+  Bell, ChevronDown, LogOut, LayoutDashboard, Megaphone, MessageSquare,
   Settings, ShoppingBag, Heart, Search, X, Menu,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
+import api from '../api/client.js';
 import { logoutUser } from '../store/slices/authSlice.js';
+import { setNotifications, setUnreadNotifications } from '../store/slices/uiSlice.js';
 import Avatar from './Avatar.jsx';
+import { timeAgo } from '../utils/format.js';
 
 export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
+  const notifications = useSelector((s) => s.ui.notifications);
+  const unreadNotifications = useSelector((s) => s.ui.unreadNotifications);
 
   const [search, setSearch] = useState('');
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(null); // 'user' | 'notif' | null
   const [mobileMenu, setMobileMenu] = useState(false);
   const ref = useRef(null);
 
   useEffect(() => {
+    if (!user) return;
+    api.get('/notifications').then(({ data }) => {
+      dispatch(setNotifications(data.notifications));
+      dispatch(setUnreadNotifications(data.unreadCount));
+    }).catch(() => {});
+  }, [dispatch, user]);
+
+  useEffect(() => {
     const onClick = (e) => {
-      if (ref.current && !ref.current.contains(e.target)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target)) setOpen(null);
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
@@ -30,11 +43,11 @@ export default function Navbar() {
   const onSearch = (e) => {
     e.preventDefault();
     if (search.trim()) navigate(`/search?q=${encodeURIComponent(search.trim())}`);
-    setOpen(false);
+    setOpen(null);
   };
 
   const goTo = (path) => {
-    setOpen(false);
+    setOpen(null);
     setMobileMenu(false);
     navigate(path);
   };
@@ -79,40 +92,82 @@ export default function Navbar() {
         </form>
 
         <nav className="ml-auto hidden items-center gap-5 lg:flex">
-          {user ? (
+          {user && (
             <div className="relative">
               <button
-                onClick={() => setOpen(!open)}
-                className="flex items-center gap-2 rounded-full p-1 transition hover:bg-gray-100"
+                onClick={() => setOpen(open === 'notif' ? null : 'notif')}
+                className="relative rounded-full p-2 text-gray-600 transition hover:bg-gray-100"
+                aria-label="Notifications"
               >
-                <Avatar user={user} size={34} />
-                <ChevronDown size={15} className="text-gray-500" />
+                <Bell size={20} />
+                {unreadNotifications > 0 && (
+                  <span className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
               </button>
-              {open && (
-                <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lift">
+              {open === 'notif' && (
+                <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lift">
                   <div className="border-b border-gray-100 px-4 py-3">
-                    <p className="truncate text-sm font-bold text-gray-800">{user.name}</p>
-                    <p className="truncate text-xs text-gray-400">{user.email}</p>
+                    <span className="text-sm font-bold text-gray-800">Notifications</span>
                   </div>
-                  <div className="py-1">
-                    <MenuItem icon={<LayoutDashboard size={16} />} label="Dashboard" onClick={() => goTo('/dashboard')} />
-                    <MenuItem icon={<ShoppingBag size={16} />} label="My Orders" onClick={() => goTo('/dashboard/orders')} />
-                    <MenuItem icon={<Megaphone size={16} />} label="My Gigs" onClick={() => goTo('/dashboard/gigs')} />
-                    <MenuItem icon={<MessageSquare size={16} />} label="Messages" onClick={() => goTo('/dashboard/messages')} />
-                    <MenuItem icon={<Heart size={16} />} label="Wishlist" onClick={() => goTo('/dashboard/wishlist')} />
-                    <MenuItem icon={<Settings size={16} />} label="Settings" onClick={() => goTo('/dashboard/settings')} />
-                  </div>
-                  <div className="border-t border-gray-100 py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
-                    >
-                      <LogOut size={16} /> Sign Out
-                    </button>
+                  <div className="max-h-80 overflow-y-auto">
+                    {(!notifications || notifications.length === 0) && (
+                      <p className="px-4 py-8 text-center text-sm text-gray-400">No notifications yet</p>
+                    )}
+                    {(notifications || []).slice(0, 8).map((n) => (
+                      <button
+                        key={n._id}
+                        onClick={() => goTo(n.link || '/dashboard')}
+                        className="block w-full border-b border-gray-50 px-4 py-3 text-left transition hover:bg-gray-50"
+                      >
+                        <p className="text-sm font-semibold text-gray-800">{n.title}</p>
+                        {n.body && <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{n.body}</p>}
+                        <p className="mt-1 text-[10px] text-gray-400">{timeAgo(n.createdAt)}</p>
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </div>
+          )}
+
+          {user ? (
+            <>
+              <div className="relative">
+                <button
+                  onClick={() => setOpen(open === 'user' ? null : 'user')}
+                  className="flex items-center gap-2 rounded-full p-1 transition hover:bg-gray-100"
+                >
+                  <Avatar user={user} size={34} />
+                  <ChevronDown size={15} className="text-gray-500" />
+                </button>
+                {open === 'user' && (
+                  <div className="absolute right-0 mt-2 w-60 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lift">
+                    <div className="border-b border-gray-100 px-4 py-3">
+                      <p className="truncate text-sm font-bold text-gray-800">{user.name}</p>
+                      <p className="truncate text-xs text-gray-400">{user.email}</p>
+                    </div>
+                    <div className="py-1">
+                      <MenuItem icon={<LayoutDashboard size={16} />} label="Dashboard" onClick={() => goTo('/dashboard')} />
+                      <MenuItem icon={<ShoppingBag size={16} />} label="My Orders" onClick={() => goTo('/dashboard/orders')} />
+                      <MenuItem icon={<Megaphone size={16} />} label="My Gigs" onClick={() => goTo('/dashboard/gigs')} />
+                      <MenuItem icon={<MessageSquare size={16} />} label="Messages" onClick={() => goTo('/dashboard/messages')} />
+                      <MenuItem icon={<Heart size={16} />} label="Wishlist" onClick={() => goTo('/dashboard/wishlist')} />
+                      <MenuItem icon={<Settings size={16} />} label="Settings" onClick={() => goTo('/dashboard/settings')} />
+                    </div>
+                    <div className="border-t border-gray-100 py-1">
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center gap-3 px-4 py-2.5 text-sm font-medium text-rose-600 transition hover:bg-rose-50"
+                      >
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
           ) : (
             <>
               <Link to="/login" className="text-sm font-semibold text-gray-600 hover:text-brand-600">Sign in</Link>
@@ -125,12 +180,7 @@ export default function Navbar() {
       {mobileMenu && (
         <div className="border-t border-gray-100 bg-white px-4 py-4 lg:hidden">
           <form onSubmit={onSearch} className="mb-4 flex gap-2">
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search services…"
-              className="input"
-            />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search services…" className="input" />
             <button type="submit" className="btn-primary shrink-0"><Search size={16} /></button>
           </form>
           {user ? (
