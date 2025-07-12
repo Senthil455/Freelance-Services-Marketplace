@@ -37,6 +37,37 @@ export const logoutUser = createAsyncThunk('auth/logout', async (_, { rejectWith
   }
 });
 
+export const becomeSeller = createAsyncThunk('auth/becomeSeller', async (_, { rejectWithValue }) => {
+  try {
+    const { data } = await api.post('/users/become-seller');
+    return data.user;
+  } catch (err) {
+    return rejectWithValue(err.message);
+  }
+});
+
+export const updateProfile = createAsyncThunk('auth/updateProfile', async (payload, { rejectWithValue }) => {
+  try {
+    const body = new FormData();
+    Object.entries(payload).forEach(([k, v]) => {
+      if (v !== undefined && v !== null) body.append(k, typeof v === 'object' ? JSON.stringify(v) : v);
+    });
+    const { data } = await api.put('/users/profile', body);
+    return data.user;
+  } catch (err) {
+    return rejectWithValue(err.message);
+  }
+});
+
+export const changePassword = createAsyncThunk('auth/changePassword', async (payload, { rejectWithValue }) => {
+  try {
+    const { data } = await api.put('/users/change-password', payload);
+    return data.message;
+  } catch (err) {
+    return rejectWithValue(err.message);
+  }
+});
+
 const initialState = {
   user: null,
   loading: false,
@@ -81,6 +112,12 @@ const authSlice = createSlice({
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.user = null;
+      })
+      .addCase(becomeSeller.fulfilled, (state, action) => {
+        state.user = action.payload;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.user = { ...state.user, ...action.payload };
       });
   },
 });
