@@ -46,6 +46,7 @@ export default function GigDetail() {
   if (!gig) return null;
 
   const basic = gig.packages?.basic;
+  const reviews = gig.reviews || [];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -60,6 +61,31 @@ export default function GigDetail() {
             <span className="inline-flex items-center gap-1"><Eye size={13} /> {gig.views ?? 0} views</span>
           </div>
           <p className="mt-5 leading-relaxed text-gray-700">{gig.description}</p>
+
+          <section className="mt-10 border-t border-gray-100 pt-8">
+            <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
+            {reviews.length > 0 ? (
+              <>
+                <div className="mt-4 grid gap-6 sm:grid-cols-[240px_1fr]">
+                  <div className="card h-fit p-5 text-center">
+                    <p className="text-4xl font-extrabold text-gray-900">{gig.rating?.toFixed(1) || '—'}/5</p>
+                    <RatingStars rating={gig.rating} />
+                    <p className="mt-2 text-sm text-gray-500">{reviews.length} reviews</p>
+                  </div>
+                  <div className="space-y-2">
+                    {[5, 4, 3, 2, 1].map((star) => (
+                      <Bar key={star} star={star} total={reviews.length} reviews={reviews} />
+                    ))}
+                  </div>
+                </div>
+                <div className="mt-8 space-y-6">
+                  {reviews.map((r) => <ReviewCard key={r._id} review={r} />)}
+                </div>
+              </>
+            ) : (
+              <p className="mt-3 text-sm text-gray-500">No reviews yet.</p>
+            )}
+          </section>
         </div>
 
         <aside>
@@ -100,6 +126,35 @@ export default function GigDetail() {
         />
       )}
     </main>
+  );
+}
+
+function Bar({ star, total, reviews }) {
+  const count = reviews.filter((r) => Math.round(r.rating) === star).length;
+  const pct = total ? Math.round((count / total) * 100) : 0;
+  return (
+    <div className="flex items-center gap-3 text-xs text-gray-500">
+      <span className="w-8 shrink-0 text-right font-semibold">{star}★</span>
+      <div className="h-2 flex-1 overflow-hidden rounded-full bg-gray-100">
+        <div className="h-full rounded-full bg-amber-400" style={{ width: `${pct}%` }} />
+      </div>
+      <span className="w-10 shrink-0">{count}</span>
+    </div>
+  );
+}
+
+function ReviewCard({ review }) {
+  return (
+    <div className="border-b border-gray-100 pb-6">
+      <div className="flex items-center gap-2">
+        <Avatar user={review.user} size={32} />
+        <div>
+          <p className="text-sm font-bold text-gray-800">{review.user?.name}</p>
+          <RatingStars rating={review.rating} />
+        </div>
+      </div>
+      <p className="mt-2 text-sm leading-relaxed text-gray-600">{review.comment}</p>
+    </div>
   );
 }
 
