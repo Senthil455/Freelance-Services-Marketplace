@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { BadgeCheck, Check, Eye, X } from 'lucide-react';
+import { BadgeCheck, Check, ChevronDown, Eye, X } from 'lucide-react';
 import { toast } from 'react-toastify';
 import api from '../api/client.js';
 import Avatar from '../components/Avatar.jsx';
+import GigCard from '../components/GigCard.jsx';
 import RatingStars from '../components/RatingStars.jsx';
 import Spinner from '../components/Spinner.jsx';
 import { formatPrice } from '../utils/format.js';
@@ -47,6 +48,10 @@ export default function GigDetail() {
 
   const basic = gig.packages?.basic;
   const reviews = gig.reviews || [];
+  const faq = gig.faq || [];
+  const related = gig.related || [];
+  const tags = gig.tags || [];
+  const requirements = gig.requirements || [];
 
   return (
     <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
@@ -61,6 +66,54 @@ export default function GigDetail() {
             <span className="inline-flex items-center gap-1"><Eye size={13} /> {gig.views ?? 0} views</span>
           </div>
           <p className="mt-5 leading-relaxed text-gray-700">{gig.description}</p>
+
+          <section className="mt-10 border-t border-gray-100 pt-8">
+            <h2 className="text-xl font-bold text-gray-900">About this service</h2>
+            <p className="mt-3 leading-relaxed text-gray-600">{gig.description}</p>
+          </section>
+
+          {tags.length > 0 && (
+            <section className="mt-10 border-t border-gray-100 pt-8">
+              <h2 className="text-xl font-bold text-gray-900">Tags</h2>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {tags.map((t) => <span key={t} className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-600">{t}</span>)}
+              </div>
+            </section>
+          )}
+
+          {requirements.length > 0 && (
+            <section className="mt-10 border-t border-gray-100 pt-8">
+              <h2 className="text-xl font-bold text-gray-900">What you need to provide</h2>
+              <ul className="mt-3 grid gap-2">
+                {requirements.map((r, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-brand-100 text-[10px] font-bold text-brand-700">{i + 1}</span>
+                    {r}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          <section className="mt-10 border-t border-gray-100 pt-8">
+            <h2 className="text-xl font-bold text-gray-900">Frequently asked questions</h2>
+            {faq.length > 0 ? (
+              <div className="mt-3 space-y-2">
+                {faq.map((f, i) => <FaqRow key={i} q={f.question} a={f.answer} />)}
+              </div>
+            ) : (
+              <p className="mt-3 text-sm text-gray-500">No FAQs yet.</p>
+            )}
+          </section>
+
+          {related.length > 0 && (
+            <section className="mt-10 border-t border-gray-100 pt-8">
+              <h2 className="text-xl font-bold text-gray-900">Related services</h2>
+              <div className="mt-4 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+                {related.map((g) => <GigCard key={g._id} gig={g} compact />)}
+              </div>
+            </section>
+          )}
 
           <section className="mt-10 border-t border-gray-100 pt-8">
             <h2 className="text-xl font-bold text-gray-900">Reviews</h2>
@@ -154,6 +207,19 @@ function ReviewCard({ review }) {
         </div>
       </div>
       <p className="mt-2 text-sm leading-relaxed text-gray-600">{review.comment}</p>
+    </div>
+  );
+}
+
+function FaqRow({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-gray-200">
+      <button type="button" onClick={() => setOpen(!open)} className="flex w-full items-center justify-between px-4 py-3 text-left text-sm font-semibold text-gray-800">
+        {q}
+        <ChevronDown size={15} className={`transition ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && <p className="px-4 pb-3 text-sm text-gray-600">{a}</p>}
     </div>
   );
 }
