@@ -16,11 +16,11 @@ export default function Navbar() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((s) => s.auth);
-  const notifications = useSelector((s) => s.ui.notifications);
-  const unreadNotifications = useSelector((s) => s.ui.unreadNotifications);
+  const { notifications, unreadNotifications } = useSelector((s) => s.ui);
 
   const [search, setSearch] = useState('');
   const [open, setOpen] = useState(null); // 'user' | 'notif' | null
+  const [notifOpen, setNotifOpen] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const ref = useRef(null);
 
@@ -44,6 +44,14 @@ export default function Navbar() {
     e.preventDefault();
     if (search.trim()) navigate(`/search?q=${encodeURIComponent(search.trim())}`);
     setOpen(null);
+  };
+
+  const markAllRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      dispatch(setUnreadNotifications(0));
+      dispatch(setNotifications((notifications || []).map((n) => ({ ...n, read: true }))));
+    } catch {}
   };
 
   const goTo = (path) => {
@@ -78,6 +86,8 @@ export default function Navbar() {
           {mobileMenu ? <X size={20} /> : <Menu size={20} />}
         </button>
 
+        {!user && <span className="hidden" />}
+
         <form onSubmit={onSearch} className="hidden flex-1 max-w-xl lg:flex">
           <div className="relative w-full">
             <input
@@ -87,7 +97,9 @@ export default function Navbar() {
               className="input !rounded-r-none !pr-9"
             />
             <Search size={16} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
-            <button type="submit" className="btn-primary -ml-px !rounded-l-none">Search</button>
+            <button type="submit" className="btn-primary -ml-px !rounded-l-none">
+              Search
+            </button>
           </div>
         </form>
 
@@ -108,8 +120,11 @@ export default function Navbar() {
               </button>
               {open === 'notif' && (
                 <div className="absolute right-0 mt-2 w-80 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lift">
-                  <div className="border-b border-gray-100 px-4 py-3">
+                  <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                     <span className="text-sm font-bold text-gray-800">Notifications</span>
+                    <button onClick={markAllRead} className="text-xs font-semibold text-brand-600 hover:underline">
+                      Mark all read
+                    </button>
                   </div>
                   <div className="max-h-80 overflow-y-auto">
                     {(!notifications || notifications.length === 0) && (
@@ -119,7 +134,7 @@ export default function Navbar() {
                       <button
                         key={n._id}
                         onClick={() => goTo(n.link || '/dashboard')}
-                        className="block w-full border-b border-gray-50 px-4 py-3 text-left transition hover:bg-gray-50"
+                        className={`block w-full border-b border-gray-50 px-4 py-3 text-left transition hover:bg-gray-50 ${!n.read ? 'bg-brand-50/40' : ''}`}
                       >
                         <p className="text-sm font-semibold text-gray-800">{n.title}</p>
                         {n.body && <p className="mt-0.5 line-clamp-2 text-xs text-gray-500">{n.body}</p>}
@@ -127,13 +142,30 @@ export default function Navbar() {
                       </button>
                     ))}
                   </div>
+                  <button
+                    onClick={() => goTo('/dashboard/notifications')}
+                    className="block w-full border-t border-gray-100 px-4 py-2.5 text-center text-sm font-semibold text-brand-600 hover:bg-gray-50"
+                  >
+                    View all
+                  </button>
                 </div>
               )}
             </div>
           )}
 
+          {user && user.role === 'admin' && (
+            <button onClick={() => goTo('/admin')} className="text-sm font-semibold text-gray-600 hover:text-brand-600">
+              Admin
+            </button>
+          )}
+
           {user ? (
             <>
+              {user.role !== 'admin' && (
+                <Link to="/dashboard/gigs/new" className="hidden md:inline-flex text-sm font-semibold text-gray-600 hover:text-brand-600">
+                  Become a Seller
+                </Link>
+              )}
               <div className="relative">
                 <button
                   onClick={() => setOpen(open === 'user' ? null : 'user')}
@@ -180,8 +212,15 @@ export default function Navbar() {
       {mobileMenu && (
         <div className="border-t border-gray-100 bg-white px-4 py-4 lg:hidden">
           <form onSubmit={onSearch} className="mb-4 flex gap-2">
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search services…" className="input" />
-            <button type="submit" className="btn-primary shrink-0"><Search size={16} /></button>
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search services…"
+              className="input"
+            />
+            <button type="submit" className="btn-primary shrink-0">
+              <Search size={16} />
+            </button>
           </form>
           {user ? (
             <div className="grid gap-1">

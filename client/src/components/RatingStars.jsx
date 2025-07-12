@@ -1,21 +1,18 @@
 import { Star } from 'lucide-react';
 
-export default function RatingStars({ rating = 0, count }) {
-  if (!rating) return null;
-
+export default function RatingStars({ rating, count, size = 15, className = '' }) {
+  const r = Number(rating) || 0;
   return (
-    <span className="inline-flex items-center gap-1">
-      <span className="flex items-center text-amber-400">
-        {[1, 2, 3, 4, 5].map((i) => (
-          <Star
-            key={i}
-            size={15}
-            className={i <= Math.round(rating) ? 'fill-amber-400 text-amber-400' : 'text-gray-300'}
-          />
-        ))}
+    <span className={`inline-flex items-center gap-1 ${className}`}>
+      <Star size={size} className="fill-amber-400 text-amber-400" />
+      <span className="text-sm font-bold" style={{ fontSize: size - 2 }}>
+        {r.toFixed(1)}
       </span>
-      <span className="text-xs font-medium text-gray-500">{rating.toFixed(1)}</span>
-      {count != null && <span className="text-xs text-gray-400">({count})</span>}
+      {count !== undefined && (
+        <span className="text-gray-500" style={{ fontSize: size - 3 }}>
+          ({count})
+        </span>
+      )}
     </span>
   );
 }

@@ -1,10 +1,36 @@
 import { Link } from 'react-router-dom';
-import { BadgeCheck, Eye } from 'lucide-react';
+import { BadgeCheck, Eye, Heart } from 'lucide-react';
+import { useSelector, useDispatch } from 'react-redux';
+import api from '../api/client.js';
+import { toast } from 'react-toastify';
+import { toggleFavoriteLocal } from '../store/slices/uiSlice.js';
 import { formatPrice } from '../utils/format.js';
 import RatingStars from './RatingStars.jsx';
 import Avatar from './Avatar.jsx';
 
 export default function GigCard({ gig, compact = false }) {
+  const dispatch = useDispatch();
+  const { user } = useSelector((s) => s.auth);
+  const favorites = useSelector((s) => s.ui.favorites);
+
+  const isFavorite = user ? favorites.includes(gig._id) : false;
+
+  const toggleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!user) {
+      toast.info('Please sign in to save gigs');
+      return;
+    }
+    try {
+      const { data } = await api.post('/users/favorites/toggle', { gigId: gig._id });
+      dispatch(toggleFavoriteLocal(gig._id));
+      toast.success(data.isFavorite ? 'Added to wishlist' : 'Removed from wishlist');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
+
   const price =
     gig.packages?.basic?.price ??
     gig.packagesBasicPrice ??
@@ -22,6 +48,18 @@ export default function GigCard({ gig, compact = false }) {
           loading="lazy"
           className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
         />
+        {!compact && (
+          <button
+            onClick={toggleFavorite}
+            aria-label={isFavorite ? 'Remove from wishlist' : 'Save to wishlist'}
+            className="absolute right-2.5 top-2.5 rounded-full bg-white/90 p-2 shadow transition hover:scale-105"
+          >
+            <Heart
+              size={16}
+              className={isFavorite ? 'fill-rose-500 text-rose-500' : 'text-gray-600'}
+            />
+          </button>
+        )}
         {gig.featured && (
           <span className="absolute left-2.5 top-2.5 badge bg-brand-600 text-white">Featured</span>
         )}
@@ -36,7 +74,7 @@ export default function GigCard({ gig, compact = false }) {
             <BadgeCheck size={15} className="shrink-0 text-brand-500" />
           )}
         </div>
-        <p className="line-clamp-2 text-[15px] leading-snug text-gray-800 group-hover:underline">
+        <p className={`line-clamp-2 text-[15px] leading-snug text-gray-800 group-hover:underline ${compact ? 'line-clamp-1' : ''}`}>
           {gig.title}
         </p>
         <div className="mt-2 flex items-center justify-between">

@@ -1,38 +1,42 @@
-import { ChevronLeft, ChevronRight } from 'lucide-react';
-
 export default function Pagination({ page, totalPages, onChange }) {
-  if (!totalPages || totalPages <= 1) return null;
-  const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+  if (totalPages <= 1) return null;
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - page) <= 1) pages.push(i);
+    else if (pages[pages.length - 1] !== '...') pages.push('...');
+  }
 
   return (
-    <div className="mt-8 flex items-center justify-center gap-1.5">
+    <nav className="mt-8 flex items-center justify-center gap-1.5">
       <button
+        className="btn-secondary !px-3 !py-1.5"
         disabled={page <= 1}
         onClick={() => onChange(page - 1)}
-        className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300 disabled:opacity-40"
-        aria-label="Previous page"
       >
-        <ChevronLeft size={16} />
+        Prev
       </button>
-      {pages.map((p) => (
-        <button
-          key={p}
-          onClick={() => onChange(p)}
-          className={`min-w-9 rounded-lg border px-2 py-1.5 text-sm font-semibold transition ${
-            p === page ? 'border-brand-600 bg-brand-600 text-white' : 'border-gray-200 text-gray-600 hover:border-gray-300'
-          }`}
-        >
-          {p}
-        </button>
-      ))}
+      {pages.map((p, i) =>
+        p === '...' ? (
+          <span key={`e${i}`} className="px-1 text-gray-400">…</span>
+        ) : (
+          <button
+            key={p}
+            onClick={() => onChange(p)}
+            className={`h-9 min-w-9 rounded-lg px-3 text-sm font-semibold transition ${
+              p === page ? 'bg-brand-600 text-white' : 'text-gray-600 hover:bg-gray-100'
+            }`}
+          >
+            {p}
+          </button>
+        )
+      )}
       <button
+        className="btn-secondary !px-3 !py-1.5"
         disabled={page >= totalPages}
         onClick={() => onChange(page + 1)}
-        className="rounded-lg border border-gray-200 p-2 text-gray-600 transition hover:border-gray-300 disabled:opacity-40"
-        aria-label="Next page"
       >
-        <ChevronRight size={16} />
+        Next
       </button>
-    </div>
+    </nav>
   );
 }

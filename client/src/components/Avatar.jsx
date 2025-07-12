@@ -11,6 +11,10 @@ export default function Avatar({ user, size = 40, className = '' }) {
         alt={name}
         style={{ width: size, height: size }}
         className={`rounded-full object-cover ${className}`}
+        onError={(e) => {
+          e.currentTarget.style.display = 'none';
+          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+        }}
       />
     );
   }
