@@ -7,7 +7,7 @@ export default function DashboardOverview() {
     <div className="space-y-8">
       <div className="rounded-2xl bg-gradient-to-r from-brand-600 to-brand-800 p-6 text-white sm:p-8">
         <h1 className="text-2xl font-extrabold">Welcome back, {user?.name?.split(' ')[0]} 👋</h1>
-        <p className="mt-1 text-sm text-brand-100">Your dashboard is ready — real stats are coming soon.</p>
+        <p className="mt-1 text-sm text-brand-100">An overview of your activity and recent orders.</p>
       </div>
 
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
