@@ -83,7 +83,7 @@ export default function DashboardOrders() {
           icon={role === 'seller' ? <Package size={26} /> : <ShoppingBag size={26} />}
         />
       ) : (
-        <div className="grid gap-4">
+        <div className="grid gap-4 lg:gap-6">
           {orders.map((o) => (
             <Link key={o._id} to={`/dashboard/orders/${o._id}`} className="card flex flex-col gap-4 p-4 transition hover:shadow-lift sm:flex-row sm:items-center sm:p-5">
               <div className="min-w-0 flex-1">
