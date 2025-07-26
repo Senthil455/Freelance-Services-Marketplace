@@ -87,7 +87,7 @@ export default function DashboardOrders() {
           {orders.map((o) => (
             <Link key={o._id} to={`/dashboard/orders/${o._id}`} className="card flex flex-col gap-4 p-4 transition hover:shadow-lift sm:flex-row sm:items-center sm:p-5">
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-1 text-sm font-bold text-gray-800">{o.gigTitle}</p>
+                <p className="line-clamp-1 text-sm font-bold text-gray-800">{o.gigTitle || o.gig?.title}</p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                   <Avatar user={other(o)} size={20} />
                   <span className="truncate">{other(o)?.name}</span>
