@@ -81,6 +81,7 @@ export default function DashboardOrders() {
           title={status === 'all' ? `No ${role === 'seller' ? 'incoming ' : ''}orders yet` : `No ${status.replace('_', ' ')} orders`}
           subtitle="Try changing the filters to see more orders."
           icon={role === 'seller' ? <Package size={26} /> : <ShoppingBag size={26} />}
+          action={<Link to="/browse" className="btn-primary mt-3">Browse gigs</Link>}
         />
       ) : (
         <div className="grid gap-4 lg:gap-6">
