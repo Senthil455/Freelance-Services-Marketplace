@@ -11,6 +11,7 @@ export default function Messages() {
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState('');
   const [loading, setLoading] = useState(true);
+  const bottomRef = useRef(null);
 
   useEffect(() => {
     api.get('/chat/conversations')
