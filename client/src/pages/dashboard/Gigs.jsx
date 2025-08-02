@@ -62,7 +62,8 @@ export default function DashboardGigs() {
                 <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
                   <span className="inline-flex items-center gap-1"><Eye size={13} /> {gig.views ?? 0}</span>
                   <span className="inline-flex items-center gap-1"><Star size={13} className="fill-amber-400 text-amber-400" /> {gig.rating || 0}</span>
-                  <span>{gig.sales ?? 0} sales</span>
+                  <span>{gig.sales ?? 0} sales
+                  {gig.rating > 0 && <Star className="fill-amber-400 text-amber-400" size={13} />} {gig.rating > 0 ? gig.rating : ''}</span>
                 </div>
                 <div className="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
                   <span className="text-base font-extrabold text-gray-900">{formatPrice(gig.packages?.basic?.price)}</span>
