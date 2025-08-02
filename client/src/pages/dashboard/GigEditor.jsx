@@ -131,5 +131,5 @@ export default function GigEditor() {
       .finally(() => setSaving(false));
   };
 
-  return null; // rendered by the reassembled editor in the next commit
+  return null; // buyer gate and gallery wired in the final pass
 }
