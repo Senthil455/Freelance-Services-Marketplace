@@ -77,7 +77,7 @@ export default function Messages() {
         </div>
         <form onSubmit={send} className="flex items-center gap-2 border-t p-3">
           <button type="button" className="text-slate-400 hover:text-slate-600"><Paperclip className="h-5 w-5" /></button>
-          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message" className="input flex-1" />
+          <input value={text} onChange={(e) => setText(e.target.value)} placeholder="Type a message..." className="input flex-1" />
           <button type="submit" className="btn btn-primary"><Send className="h-4 w-4" /></button>
         </form>
       </div>
