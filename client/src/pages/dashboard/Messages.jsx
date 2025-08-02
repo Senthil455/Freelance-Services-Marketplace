@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { ChevronLeft, Send, Paperclip } from 'lucide-react';
 import api from '../api/client';
