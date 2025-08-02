@@ -1,180 +1,135 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, Plus, X } from 'lucide-react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { ArrowLeft, Plus, Trash2, X } from 'lucide-react';
 import { toast } from 'react-toastify';
-import api from '../../api/client.js';
+import api from '../api/client';
+import { useAppDispatch, becomeSeller } from '../store/authSlice';
+import { Spinner } from '../components/Spinner.jsx';
 
-const EMPTY_PACKAGE = (name, title) => ({ name, title, description: '', price: 25, deliveryDays: 3, revisions: 0, features: [] });
+const NEW_CAT = '__new__';
 
 export default function GigEditor() {
+  const navigate = useNavigate();
   const { id } = useParams();
-  const isEdit = !!id;
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
+  const user = useSelector((s) => s.auth.user);
+  const dispatch = useAppDispatch();
+  const isSeller = user?.role === 'seller' || user?.isSeller;
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [category, setCategory] = useState('');
-  const [subCategory, setSubCategory] = useState('');
-  const [seoTitle, setSeoTitle] = useState('');
-  const [tags, setTags] = useState([]);
-  const [tagInput, setTagInput] = useState('');
+  const [subcategory, setSubcategory] = useState('');
+  const [newCategory, setNewCategory] = useState('');
   const [categories, setCategories] = useState([]);
-  const [packages, setPackages] = useState({
-    basic: EMPTY_PACKAGE('basic', 'Basic'),
-    standard: EMPTY_PACKAGE('standard', 'Standard'),
-    premium: EMPTY_PACKAGE('premium', 'Premium'),
+  const [form, setForm] = useState({
+    title: '', description: '', tags: [], seoTitle: '',
+    price: '', revisionPolicy: '', deliveryTime: '',
   });
+  const [packages, setPackages] = useState([
+    { name: 'Basic', price: '', deliveryDays: '', revisions: '', features: [] },
+    { name: 'Standard', price: '', deliveryDays: '', revisions: '', features: [] },
+    { name: 'Premium', price: '', deliveryDays: '', revisions: '', features: [] },
+  ]);
+  const [requirements, setRequirements] = useState([]);
+  const [faqs, setFaqs] = useState([]);
+  const [images, setImages] = useState([]);
+  const [existingImages, setExistingImages] = useState([]);
+  const [removedImages, setRemovedImages] = useState([]);
+  const [fileInput, setFileInput] = useState(null);
+  const [errors, setErrors] = useState({});
 
   useEffect(() => {
-    api.get('/categories')
-      .then(({ data }) => setCategories(data.categories || []))
-      .catch(() => {});
-  }, []);
+    if (!isSeller) { setLoading(false); return; }
 
-  const setPkg = (key, field, value) => {
-    setPackages((p) => ({ ...p, [key]: { ...p[key], [field]: value } }));
-  };
+    Promise.all([api.get('/gigs/categories'), api.get('/gigs/selling-tips')])
+      .then(([catRes]) => setCategories(catRes.data))
+      .catch(() => toast.error('Failed to load gig data'));
 
-  const addTag = () => {
-    const t = tagInput.trim().toLowerCase();
-    if (!t) return;
-    if (tags.length >= 5) return toast.info('Maximum 5 tags');
-    if (tags.includes(t)) return setTagInput('');
-    setTags([...tags, t]);
-    setTagInput('');
-  };
-
-  const submit = async (e) => {
-    e.preventDefault();
-    if (title.trim().length < 10) return toast.error('Title must be at least 10 characters');
-    if (description.trim().length < 30) return toast.error('Description must be at least 30 characters');
-    if (!category) return toast.error('Please select a category');
-    for (const key of ['basic', 'standard', 'premium']) {
-      const p = packages[key];
-      if (!p.title.trim() || !p.description.trim()) return toast.error(`Complete the ${key} package`);
-      if (!p.price || p.price < 5) return toast.error('Minimum price is $5');
-      if (!p.deliveryDays || p.deliveryDays < 1) return toast.error('Delivery time must be at least 1 day');
+    if (id) {
+      api.get(`/gigs/${id}`)
+        .then((res) => {
+          const g = res.data;
+          setForm({
+            title: g.title, description: g.description, tags: g.tags || [],
+            seoTitle: g.seoTitle || '', price: g.price || '',
+            revisionPolicy: g.revisionPolicy || '', deliveryTime: g.deliveryTime || '',
+          });
+          setCategory(g.category || '');
+          setSubcategory(g.subcategory || '');
+          setPackages(g.packages?.length ? g.packages : packages.map((p) => ({
+            name: p.name, price: p.price ?? '', deliveryDays: p.deliveryDays ?? '',
+            revisions: p.revisions ?? '', features: p.features || [],
+          })));
+          setRequirements(g.requirements || []);
+          setFaqs(g.faqs || []);
+          setExistingImages(g.images || []);
+        })
+        .catch(() => toast.error('Gig not found'))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
     }
+  }, [id, isSeller]);
 
-    const body = new FormData();
-    body.append('title', title.trim());
-    body.append('description', description.trim());
-    body.append('category', category);
-    body.append('subCategory', subCategory);
-    body.append('tags', JSON.stringify(tags));
-    body.append('seoTitle', seoTitle);
-    body.append('packages', JSON.stringify(packages));
+  const update = (key, value) => setForm((f) => ({ ...f, [key]: value }));
 
-    try {
-      if (isEdit) {
-        await api.put(`/gigs/${id}`, body);
-        toast.success('Gig updated');
-      } else {
-        await api.post('/gigs', body);
-        toast.success('Gig published!');
-      }
-    } catch (err) { toast.error(err.message); }
+  const updatePackage = (i, patch) =>
+    setPackages((list) => list.map((p, idx) => (idx === i ? { ...p, ...patch } : p)));
+
+  if (loading) return <Spinner />;
+  if (!isSeller) {
+    return (
+      <div className="flex flex-col items-center justify-center py-24 text-center">
+        <div className="h-16 w-16 rounded-2xl bg-slate-100 flex items-center justify-center mb-4">
+          <Sparkles className="h-8 w-8 text-slate-400" />
+        </div>
+        <h1 className="text-2xl font-semibold">Become a seller</h1>
+        <p className="mt-2 max-w-md text-sm text-slate-500">
+          Add a professional description, your skills and languages to start selling on SkillForge.
+        </p>
+        <button
+          onClick={() => dispatch(becomeSeller())}
+          className="btn btn-primary mt-5"
+        >
+          {user?.isSeller ? 'Continue as seller' : 'Become a seller'}
+        </button>
+      </div>
+    );
+  }
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    const errs = {};
+    if (!form.title.trim() || form.title.trim().length < 5) errs.title = 'Title is required (min 5 characters)';
+    if (!form.description.trim() || form.description.trim().length < 20) errs.description = 'Description is required (min 20 characters)';
+    if (!category) errs.category = 'Packages are required';
+    setErrors(errs);
+    if (Object.keys(errs).length) {
+      toast.error(Object.values(errs)[0]);
+      return;
+    }
+    setSaving(true);
+    const payload = {
+      ...form,
+      category: category === NEW_CAT ? newCategory : category,
+      subcategory, packages, requirements, faqs,
+      existingImages, removedImages,
+    };
+    const fd = new FormData();
+    fd.append('data', JSON.stringify(payload));
+    images.forEach((img) => fd.append('images', img));
+
+    const req = id
+      ? api.put(`/gigs/${id}`, fd)
+      : api.post('/gigs', fd);
+    req
+      .then(() => {
+        toast.success(id ? 'Gig updated' : 'Gig created');
+        navigate('/dashboard/gigs');
+      })
+      .catch((err) => toast.error(err.response?.data?.message || 'Failed to save gig'))
+      .finally(() => setSaving(false));
   };
 
-  return (
-    <form onSubmit={submit} className="space-y-6">
-      <div>
-        <Link to="/dashboard/gigs" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-brand-600">
-          <ArrowLeft size={15} /> My gigs
-        </Link>
-        <h1 className="mt-1 h2 text-gray-900">{isEdit ? 'Edit gig' : 'Create a new gig'}</h1>
-        <p className="mt-1 text-sm text-gray-500">Complete all three packages — they appear side by side to buyers.</p>
-      </div>
-
-      <div className="card p-6">
-        <h2 className="text-base font-bold text-gray-900">Basics</h2>
-        <label className="label mt-4">Title *</label>
-        <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="I will build a stunning responsive website…" maxLength={120} className="input" />
-        <label className="label mt-4">Description *</label>
-        <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={7} maxLength={8000} placeholder="Describe your service…" className="input resize-none" />
-      </div>
-
-      <div className="card p-6">
-        <h2 className="text-base font-bold text-gray-900">Category &amp; tags</h2>
-        <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label">Category *</label>
-            <select value={category} onChange={(e) => { setCategory(e.target.value); setSubCategory(''); }} className="input">
-              <option value="">Select category</option>
-              {categories.map((c) => <option key={c._id} value={c.name}>{c.name}</option>)}
-            </select>
-          </div>
-          <div>
-            <label className="label">Sub-category</label>
-            <select value={subCategory} onChange={(e) => setSubCategory(e.target.value)} className="input">
-              <option value="">— Optional —</option>
-              {categories.find((c) => c.name === category)?.subCategories?.map((sc) => <option key={sc} value={sc}>{sc}</option>)}
-            </select>
-          </div>
-        </div>
-        <label className="label mt-4">Search tags (max 5)</label>
-        <div className="flex gap-2">
-          <input value={tagInput} onChange={(e) => setTagInput(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addTag(); } }} placeholder="e.g. react, landing page" className="input" />
-          <button type="button" onClick={addTag} className="btn-secondary shrink-0"><Plus size={16} /></button>
-        </div>
-        {tags.length > 0 && (
-          <div className="mt-2.5 flex flex-wrap gap-2">
-            {tags.map((t) => (
-              <span key={t} className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1 text-xs font-bold text-brand-700">
-                {t}
-                <button type="button" onClick={() => setTags(tags.filter((x) => x !== t))} className="text-brand-400 hover:text-rose-500"><X size={12} /></button>
-              </span>
-            ))}
-          </div>
-        )}
-        <label className="label mt-4">SEO title (optional)</label>
-        <input value={seoTitle} onChange={(e) => setSeoTitle(e.target.value)} placeholder="A title optimized for search engines" maxLength={120} className="input" />
-      </div>
-
-      <div className="card p-6">
-        <h2 className="text-base font-bold text-gray-900">Pricing packages</h2>
-        <div className="mt-4 space-y-4">
-          {['basic', 'standard', 'premium'].map((key) => (
-            <PackageEditor key={key} label={key} pkg={packages[key]} onChange={(f, v) => setPkg(key, f, v)} />
-          ))}
-        </div>
-      </div>
-
-      <div className="flex justify-end gap-3 pb-8">
-        <Link to="/dashboard/gigs" className="btn-secondary">Cancel</Link>
-        <button type="submit" className="btn-primary">{isEdit ? 'Save changes' : 'Publish gig'}</button>
-      </div>
-    </form>
-  );
-}
-
-function PackageEditor({ label, pkg, onChange }) {
-  return (
-    <div className="rounded-xl border border-gray-200 p-4">
-      <div className="flex items-center gap-2">
-        <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wider text-white ${label === 'basic' ? 'bg-emerald-500' : label === 'standard' ? 'bg-brand-600' : 'bg-purple-500'}`}>
-          {label}
-        </span>
-        <input value={pkg.title} onChange={(e) => onChange('title', e.target.value)} placeholder="Package title" className="input !py-1.5 flex-1 text-sm font-bold" />
-      </div>
-      <textarea value={pkg.description} onChange={(e) => onChange('description', e.target.value)} rows={2} maxLength={300} placeholder="Short description of this package" className="input mt-2 resize-none" />
-      <div className="mt-2 grid grid-cols-3 gap-3">
-        <div>
-          <label className="label !text-xs">Price (USD) *</label>
-          <input type="number" min="5" value={pkg.price} onChange={(e) => onChange('price', Number(e.target.value))} className="input" />
-        </div>
-        <div>
-          <label className="label !text-xs">Delivery (days) *</label>
-          <input type="number" min="1" max="90" value={pkg.deliveryDays} onChange={(e) => onChange('deliveryDays', Number(e.target.value))} className="input" />
-        </div>
-        <div>
-          <label className="label !text-xs">Revisions</label>
-          <input type="number" min="0" max="20" value={pkg.revisions} onChange={(e) => onChange('revisions', Number(e.target.value))} className="input" />
-        </div>
-      </div>
-      <textarea value={pkg.features?.join('
-') || ''} onChange={(e) => onChange('features', e.target.value.split('
-').filter((f) => f.trim()))} rows={3} placeholder={'Responsive design
-Source files included
-…'} className="input mt-3 resize-none" />
-    </div>
-  );
+  return null; // rendered by the reassembled editor in the next commit
 }
