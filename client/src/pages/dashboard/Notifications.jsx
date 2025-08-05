@@ -22,7 +22,7 @@ export default function Notifications() {
       {items.length === 0 ? (
         <div className="text-center py-20">
           <Bell className="mx-auto h-10 w-10 text-slate-300" />
-          <p className="mt-3 text-sm text-slate-500">No notifications yet</p>
+          <p className="mt-3 text-sm text-slate-500">You are all caught up</p>
         </div>
       ) : (
         <div className="divide-y rounded-2xl border border-slate-200 bg-white">
