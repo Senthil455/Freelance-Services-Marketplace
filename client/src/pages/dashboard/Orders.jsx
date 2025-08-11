@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { ShoppingBag, Package } from 'lucide-react';
+import { ShoppingBag, Package, Star, FileText } from 'lucide-react';
 import api from '../../api/client.js';
 import Spinner from '../../components/Spinner.jsx';
 import Pagination from '../../components/Pagination.jsx';
 import EmptyState from '../../components/EmptyState.jsx';
 import Avatar from '../../components/Avatar.jsx';
-import { formatPrice, formatDate } from '../../utils/format.js';
+import { formatPrice, ORDER_STATUS_LABELS, STATUS_COLORS, formatDate } from '../../utils/format.js';
 
 const STATUSES = ['all', 'pending', 'in_progress', 'delivered', 'completed', 'revision', 'cancelled', 'disputed'];
 
@@ -40,6 +40,7 @@ export default function DashboardOrders() {
   const setParam = (key, value) => {
     const next = new URLSearchParams(params);
     next.set(key, value);
+    next.delete('page');
     setParams(next, { replace: true });
   };
 
@@ -67,7 +68,7 @@ export default function DashboardOrders() {
           <button
             key={s}
             onClick={() => setParam('status', s)}
-            className={`rounded-full px-3.5 py-1.5 text-xs font-bold capitalize transition ${status === s ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'}`}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-bold capitalize transition ${status === s ? 'bg-gray-900 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}
           >
             {s === 'all' ? 'All' : s.replace('_', ' ')}
           </button>
@@ -78,17 +79,24 @@ export default function DashboardOrders() {
         <div className="flex justify-center py-24"><Spinner size={30} /></div>
       ) : orders.length === 0 ? (
         <EmptyState
-          title={status === 'all' ? `No ${role === 'seller' ? 'incoming ' : ''}orders yet` : `No ${status.replace('_', ' ')} orders`}
-          subtitle="Try changing the filters to see more orders."
-          icon={role === 'seller' ? <Package size={26} /> : <ShoppingBag size={26} />}
-          action={<Link to="/browse" className="btn-primary mt-3">Browse gigs</Link>}
+          title={status === 'all' ? `No ${role === 'seller' ? 'incoming' : ''} orders yet` : `No ${status.replace('_', ' ')} orders`}
+          subtitle={status === 'all' ? role === 'seller' ? 'Share your gigs to start receiving orders!' : 'Browse services and place your first order.' : 'Try another status filter.'}
+          icon={status === 'all' ? role === 'seller' ? <Package size={26} /> : <ShoppingBag size={26} /> : <FileText size={26} />}
+          action={status === 'all' && role !== 'seller' ? <Link to="/search" className="btn-primary">Browse services</Link> : undefined}
         />
       ) : (
-        <div className="grid gap-4 lg:gap-6">
+        <div className="grid gap-4">
           {orders.map((o) => (
             <Link key={o._id} to={`/dashboard/orders/${o._id}`} className="card flex flex-col gap-4 p-4 transition hover:shadow-lift sm:flex-row sm:items-center sm:p-5">
+              <img src={o.gigImage || o.gig?.images?.[0]} alt="" className="h-20 w-full rounded-xl object-cover sm:w-36" />
               <div className="min-w-0 flex-1">
-                <p className="line-clamp-1 text-sm font-bold text-gray-800">{o.gigTitle || o.gig?.title}</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[11px] font-bold tracking-wider text-gray-400">{o.orderId}</span>
+                  <span className={`badge ${STATUS_COLORS[o.status] || 'bg-gray-100 text-gray-600'}`}>{ORDER_STATUS_LABELS[o.status] || o.status}</span>
+                  {o.status === 'delivered' && role === 'buyer' && <span className="badge bg-purple-100 text-purple-700">Action needed</span>}
+                </div>
+                <p className="mt-1.5 line-clamp-1 text-sm font-bold text-gray-800">{o.gigTitle}</p>
+                <p className="mt-1 text-xs text-gray-400 capitalize">{o.packageName} package · {o.deliveryDays} day delivery</p>
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                   <Avatar user={other(o)} size={20} />
                   <span className="truncate">{other(o)?.name}</span>
@@ -96,9 +104,12 @@ export default function DashboardOrders() {
                   <span>{formatDate(o.createdAt)}</span>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[11px] text-gray-400">Total</p>
-                <p className="text-lg font-extrabold text-gray-900">{formatPrice(o.total)}</p>
+              <div className="flex items-center justify-between gap-6 sm:flex-col sm:items-end sm:justify-center">
+                <div className="text-right">
+                  <p className="text-[11px] text-gray-400">Total</p>
+                  <p className="text-lg font-extrabold text-gray-900">{formatPrice(o.total)}</p>
+                </div>
+                {o.reviewed && <span className="badge bg-emerald-50 text-emerald-700"><Star size={11} /> Reviewed</span>}
               </div>
             </Link>
           ))}
