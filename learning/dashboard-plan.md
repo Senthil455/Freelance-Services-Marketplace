@@ -15,3 +15,4 @@
 - Tested every status transition from both buyer and seller sides.
 - Deleting a gig asks for confirmation before removing it.
 - Notifications mark read on click and clear the unread count.
+- The gig editor is the most complex form in the app so far.
