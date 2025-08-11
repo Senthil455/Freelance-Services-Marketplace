@@ -51,6 +51,14 @@ export default function Settings() {
       </div>
       <div className="card space-y-4">
         <div>
+          <label className="label">Skills</label>
+          <div className="flex flex-wrap gap-2">{skills.map((s) => <span key={s} className="badge">{s}</span>)}</div>
+        </div>
+        <div>
+          <label className="label">Languages</label>
+          <div className="flex flex-wrap gap-2">{languages.map((l) => <span key={l.name} className="badge">{l.name} · {l.level}</span>)}</div>
+        </div>
+        <div>
           <label className="label">Name</label>
           <input value={form.name} onChange={(e) => update('name', e.target.value)} className="input" />
         </div>
