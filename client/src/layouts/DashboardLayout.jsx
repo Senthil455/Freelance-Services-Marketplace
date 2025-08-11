@@ -1,9 +1,14 @@
 import { useState } from 'react';
-import { NavLink, Outlet, Link } from 'react-router-dom';
+import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import {
   LayoutDashboard, ShoppingBag, Megaphone, MessageSquare, Bell, Heart,
-  Settings, LogOut, Menu, X, ExternalLink,
+  Settings, LogOut, Menu, X, ExternalLink, ChevronDown,
 } from 'lucide-react';
+import { toast } from 'react-toastify';
+import { logoutUser } from '../store/slices/authSlice.js';
+import { useAppDispatch } from '../hooks/useAppDispatch.js';
+import Avatar from '../components/Avatar.jsx';
 
 const NAV = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
@@ -16,7 +21,19 @@ const NAV = [
 ];
 
 export default function DashboardLayout() {
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+  const { user } = useSelector((s) => s.auth);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      await dispatch(logoutUser());
+      navigate('/');
+    } catch (err) {
+      toast.error(err.message);
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -33,6 +50,16 @@ export default function DashboardLayout() {
           <button className="rounded-lg p-1.5 text-gray-500 hover:bg-gray-100 lg:hidden" onClick={() => setSidebarOpen(false)}>
             <X size={18} />
           </button>
+        </div>
+
+        <div className="border-b border-gray-100 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <Avatar user={user} size={40} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-gray-800">{user?.name}</p>
+              <p className="truncate text-xs capitalize text-gray-400">{user?.role}</p>
+            </div>
+          </div>
         </div>
 
         <nav className="space-y-1 px-3 py-4">
@@ -58,6 +85,9 @@ export default function DashboardLayout() {
           <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-100">
             <ExternalLink size={18} /> View site
           </Link>
+          <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-rose-600 transition hover:bg-rose-50">
+            <LogOut size={18} /> Sign out
+          </button>
         </div>
       </aside>
 
@@ -72,6 +102,15 @@ export default function DashboardLayout() {
               <Menu size={20} />
             </button>
             <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
+          </div>
+          <div className="flex items-center gap-2">
+            <Link to="/dashboard/notifications" className="relative rounded-full p-2 text-gray-500 hover:bg-gray-100" aria-label="Notifications">
+              <Bell size={19} />
+            </Link>
+            <Link to="/dashboard/settings" className="flex items-center gap-2 rounded-full p-1.5 hover:bg-gray-100">
+              <Avatar user={user} size={30} />
+              <ChevronDown size={14} className="hidden text-gray-400 sm:block" />
+            </Link>
           </div>
         </header>
 
