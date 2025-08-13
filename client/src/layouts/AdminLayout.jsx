@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { NavLink, Outlet, Link, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { LayoutDashboard, Users, Megaphone, ShoppingBag, Grid3x3, LogOut, Menu, X, Home } from 'lucide-react';
+import { LayoutDashboard, Users, Megaphone, ShoppingBag, Grid3x3, LogOut, Menu, X, ExternalLink, Home } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { logoutUser } from '../store/slices/authSlice.js';
 import { useAppDispatch } from '../hooks/useAppDispatch.js';
@@ -32,7 +32,11 @@ export default function AdminLayout() {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <aside className={'fixed inset-y-0 left-0 z-40 w-64 transform border-r border-gray-800 bg-gray-950 transition-transform lg:static lg:translate-x-0 ' + (sidebarOpen ? 'translate-x-0' : '-translate-x-full')}>
+      <aside
+        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-gray-800 bg-gray-950 transition-transform lg:static lg:translate-x-0 ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
         <div className="flex h-16 items-center justify-between border-b border-gray-800 px-5">
           <Link to="/" className="flex items-center gap-2">
             <img src="/favicon.svg" alt="SkillForge" className="h-8 w-8" />
@@ -43,6 +47,17 @@ export default function AdminLayout() {
           </button>
         </div>
 
+        <div className="border-b border-gray-800 px-5 py-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-gray-500">Admin Panel</p>
+          <div className="mt-3 flex items-center gap-3">
+            <Avatar user={user} size={38} />
+            <div className="min-w-0">
+              <p className="truncate text-sm font-bold text-white">{user?.name}</p>
+              <p className="truncate text-xs text-gray-400">{user?.email}</p>
+            </div>
+          </div>
+        </div>
+
         <nav className="space-y-1 px-3 py-4">
           {NAV.map((item) => (
             <NavLink
@@ -51,8 +66,9 @@ export default function AdminLayout() {
               end={item.end}
               onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
-                'flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ' +
-                (isActive ? 'bg-brand-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white')
+                `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold transition ${
+                  isActive ? 'bg-brand-600 text-white' : 'text-gray-400 hover:bg-gray-800 hover:text-white'
+                }`
               }
             >
               <item.icon size={18} />
@@ -65,16 +81,21 @@ export default function AdminLayout() {
           <Link to="/" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-400 transition hover:bg-gray-800 hover:text-white">
             <Home size={18} /> Back to site
           </Link>
+          <Link to="/dashboard" className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-gray-400 transition hover:bg-gray-800 hover:text-white">
+            <ExternalLink size={18} /> User dashboard
+          </Link>
           <button onClick={handleLogout} className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-semibold text-rose-400 transition hover:bg-rose-950/40">
             <LogOut size={18} /> Sign out
           </button>
         </div>
       </aside>
 
-      {sidebarOpen && <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+      {sidebarOpen && (
+        <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-gray-200 bg-white/95 px-4 backdrop-blur sm:px-6">
           <button className="rounded-lg p-2 text-gray-600 hover:bg-gray-100 lg:hidden" onClick={() => setSidebarOpen(true)} aria-label="Open menu">
             <Menu size={20} />
           </button>
@@ -82,7 +103,7 @@ export default function AdminLayout() {
           <span className="badge bg-gray-900 text-white">Administrator</span>
         </header>
 
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             <Outlet />
           </div>
