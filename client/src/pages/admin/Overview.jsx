@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Megaphone, ShoppingBag, DollarSign, Clock } from 'lucide-react';
+import { Users, Megaphone, ShoppingBag, DollarSign, Clock, AlertTriangle } from 'lucide-react';
 import api from '../../api/client.js';
 import Spinner from '../../components/Spinner.jsx';
 import Avatar from '../../components/Avatar.jsx';
@@ -48,7 +48,7 @@ export default function AdminOverview() {
           <div className="mt-6 flex h-44 items-end gap-2">
             {(stats.ordersByDay || []).map((d) => (
               <div key={d._id} className="group flex flex-1 flex-col items-center gap-1.5">
-                <div className="relative w-full rounded-t-lg bg-brand-100 transition group-hover:bg-brand-200" style={{ height: Math.max(6, (d.count / maxOrders) * 100) + '%' }}>
+                <div className="relative w-full rounded-t-lg bg-brand-100 transition group-hover:bg-brand-200" style={{ height: `${Math.max(6, (d.count / maxOrders) * 100)}%` }}>
                   <span className="absolute -top-6 left-1/2 -translate-x-1/2 whitespace-nowrap rounded bg-gray-900 px-1.5 py-0.5 text-[9px] font-bold text-white opacity-0 transition group-hover:opacity-100">
                     {d.count} · {formatPrice(d.revenue)}
                   </span>
@@ -86,13 +86,13 @@ export default function AdminOverview() {
             </div>
             <div className="divide-y divide-gray-50">
               {recentOrders.map((o) => (
-                <Link key={o._id} to="/admin/orders" className="flex items-center gap-3 px-5 py-3 transition hover:bg-gray-50">
+                <Link key={o._id} to={`/admin/orders`} className="flex items-center gap-3 px-5 py-3 transition hover:bg-gray-50">
                   <span className="flex h-8 w-14 items-center justify-center rounded-md bg-gray-100 text-[10px] font-extrabold tracking-wider text-gray-500">
-                    {o.orderId ? o.orderId.replace('FS-', '') : ''}
+                    {o.orderId?.replace('FS-', '')}
                   </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-semibold text-gray-800">{o.gigTitle}</p>
-                    <p className="text-xs text-gray-400">{o.buyer ? o.buyer.name : ''} → {o.seller ? o.seller.name : ''}</p>
+                    <p className="text-xs text-gray-400">{o.buyer?.name} → {o.seller?.name}</p>
                   </div>
                   <span className="text-sm font-bold text-gray-800">{formatPrice(o.price)}</span>
                 </Link>
@@ -108,7 +108,7 @@ export default function AdminOverview() {
 function AdminStat({ icon: Icon, label, value, color }) {
   return (
     <div className="card p-4">
-      <span className={'inline-flex h-9 w-9 items-center justify-center rounded-lg ' + color}><Icon size={17} /></span>
+      <span className={`inline-flex h-9 w-9 items-center justify-center rounded-lg ${color}`}><Icon size={17} /></span>
       <p className="mt-2.5 truncate text-xl font-extrabold text-gray-900">{value}</p>
       <p className="text-[11px] font-medium text-gray-500">{label}</p>
     </div>
