@@ -64,6 +64,7 @@ export default function App() {
         <Route path="gigs/new" element={<GigEditor />} />
         <Route path="gigs/:id/edit" element={<GigEditor />} />
         <Route path="messages" element={<DashboardMessages />} />
+        <Route path="messages/:conversationId" element={<DashboardMessages />} />
         <Route path="notifications" element={<DashboardNotifications />} />
         <Route path="settings" element={<DashboardSettings />} />
         <Route path="wishlist" element={<DashboardWishlist />} />
@@ -85,6 +86,7 @@ export default function App() {
       </Route>
 
       <Route path="*" element={<NotFound />} />
+      <Route path="/" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
