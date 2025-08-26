@@ -1,9 +1,11 @@
 import User from '../models/User.js';
 import Gig from '../models/Gig.js';
 import Order from '../models/Order.js';
+import Review from '../models/Review.js';
 import Category from '../models/Category.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
 import { notify } from './authController.js';
+import mongoose from 'mongoose';
 
 export const adminOverview = asyncHandler(async (req, res) => {
   const [totalUsers, totalSellers, totalGigs, totalOrders, totalRevenueAgg, activeOrders, pendingOrders] = await Promise.all([
@@ -37,7 +39,7 @@ export const adminOverview = asyncHandler(async (req, res) => {
       totalSellers,
       totalGigs,
       totalOrders,
-      totalRevenue: Math.round((totalRevenueAgg[0] ? totalRevenueAgg[0].total : 0) * 100) / 100,
+      totalRevenue: Math.round((totalRevenueAgg[0]?.total || 0) * 100) / 100,
       activeOrders,
       pendingOrders,
       ordersByDay,
@@ -107,7 +109,7 @@ export const adminToggleGig = asyncHandler(async (req, res) => {
   if (!gig) throw new AppError('Gig not found', 404);
   gig.active = !gig.active;
   await gig.save();
-  await notify(gig.seller, gig.active ? 'Gig re-activated' : 'Gig deactivated', '"' + gig.title + '" was ' + (gig.active ? 're-enabled' : 'deactivated') + ' by an administrator', '/dashboard/gigs', 'gig');
+  await notify(gig.seller, gig.active ? 'Gig re-activated' : 'Gig deactivated', `"${gig.title}" was ${gig.active ? 're-enabled' : 'deactivated'} by an administrator`, '/dashboard/gigs', 'gig');
   res.json({ success: true, gig });
 });
 
@@ -151,8 +153,8 @@ export const adminResolveDispute = asyncHandler(async (req, res) => {
   }
   await order.save();
 
-  await notify(order.buyer, 'Dispute resolved', 'Order ' + order.orderId + ' was ' + decision + 'ed by an administrator.', '/dashboard/orders/' + order._id, 'order');
-  await notify(order.seller, 'Dispute resolved', 'Order ' + order.orderId + ' was ' + decision + 'ed by an administrator.', '/dashboard/orders/' + order._id, 'order');
+  await notify(order.buyer, 'Dispute resolved', `Order ${order.orderId} was ${decision}ed by an administrator.`, `/dashboard/orders/${order._id}`, 'order');
+  await notify(order.seller, 'Dispute resolved', `Order ${order.orderId} was ${decision}ed by an administrator.`, `/dashboard/orders/${order._id}`, 'order');
 
   res.json({ success: true, order });
 });
