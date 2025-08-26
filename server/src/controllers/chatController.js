@@ -1,7 +1,9 @@
 import Conversation from '../models/Conversation.js';
 import Message from '../models/Message.js';
+import Gig from '../models/Gig.js';
 import User from '../models/User.js';
 import { AppError, asyncHandler } from '../utils/errors.js';
+import { toPublicUrl } from '../middleware/upload.js';
 import { notify } from './authController.js';
 
 export const getOrCreateConversation = asyncHandler(async (req, res) => {
@@ -21,7 +23,7 @@ export const getOrCreateConversation = asyncHandler(async (req, res) => {
       participants: [req.user._id, sellerId],
       gig: gigId || null,
     });
-    await notify(sellerId, 'New message', req.user.name + ' started a conversation with you', '/dashboard/messages', 'message');
+    await notify(sellerId, 'New message', `${req.user.name} started a conversation with you`, '/dashboard/messages', 'message');
   }
 
   const messages = await Message.find({ conversation: conversation._id })
@@ -79,21 +81,23 @@ export const sendMessage = asyncHandler(async (req, res) => {
   if (!isParticipant) throw new AppError('Not authorized', 403);
 
   const { text } = req.body;
-  if (!text || !text.trim()) throw new AppError('Message text is required', 400);
+  if (!text?.trim() && !req.file) throw new AppError('Message text or attachment is required', 400);
 
   const message = await Message.create({
     conversation: conversation._id,
     sender: req.user._id,
-    text: text.trim(),
+    text: text?.trim() || (req.file ? 'Sent an attachment' : ''),
+    attachment: req.file ? toPublicUrl(req.file.path) : undefined,
   });
 
   conversation.lastMessageAt = new Date();
-  conversation.lastMessagePreview = message.text.slice(0, 80);
+  conversation.lastMessagePreview = message.text.slice(0, 80) || '📎 Attachment';
   await conversation.save();
 
   const populated = await message.populate('sender', 'name avatar');
+
   const otherParty = conversation.participants.find((p) => p.toString() !== req.user._id.toString());
-  await notify(otherParty, 'New message', message.text.slice(0, 120), '/dashboard/messages', 'message');
+  await notify(otherParty, 'New message', message.text.slice(0, 120) || 'Sent an attachment', '/dashboard/messages', 'message');
 
   res.status(201).json({ success: true, message: populated, conversation });
 });
