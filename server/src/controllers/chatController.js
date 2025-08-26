@@ -38,7 +38,19 @@ export const listConversations = asyncHandler(async (req, res) => {
     .populate('participants', 'name avatar tagline isSeller')
     .populate('gig', 'title images category');
 
-  res.json({ success: true, conversations });
+  const unreadCounts = await Message.aggregate([
+    { $match: { conversation: { $in: conversations.map((c) => c._id) }, readBy: { $ne: req.user._id } } },
+    { $group: { _id: '$conversation', count: { $sum: 1 } } },
+  ]);
+  const unreadMap = Object.fromEntries(unreadCounts.map((u) => [u._id.toString(), u.count]));
+
+  res.json({
+    success: true,
+    conversations: conversations.map((c) => ({
+      ...c.toObject(),
+      unreadCount: unreadMap[c._id.toString()] || 0,
+    })),
+  });
 });
 
 export const getMessages = asyncHandler(async (req, res) => {
@@ -52,5 +64,44 @@ export const getMessages = asyncHandler(async (req, res) => {
     .limit(200)
     .populate('sender', 'name avatar');
 
+  await Message.updateMany(
+    { conversation: conversation._id, sender: { $ne: req.user._id }, readBy: { $ne: req.user._id } },
+    { $addToSet: { readBy: req.user._id } }
+  );
+
   res.json({ success: true, messages });
+});
+
+export const sendMessage = asyncHandler(async (req, res) => {
+  const conversation = await Conversation.findById(req.params.id);
+  if (!conversation) throw new AppError('Conversation not found', 404);
+  const isParticipant = conversation.participants.some((p) => p.toString() === req.user._id.toString());
+  if (!isParticipant) throw new AppError('Not authorized', 403);
+
+  const { text } = req.body;
+  if (!text || !text.trim()) throw new AppError('Message text is required', 400);
+
+  const message = await Message.create({
+    conversation: conversation._id,
+    sender: req.user._id,
+    text: text.trim(),
+  });
+
+  conversation.lastMessageAt = new Date();
+  conversation.lastMessagePreview = message.text.slice(0, 80);
+  await conversation.save();
+
+  const populated = await message.populate('sender', 'name avatar');
+  const otherParty = conversation.participants.find((p) => p.toString() !== req.user._id.toString());
+  await notify(otherParty, 'New message', message.text.slice(0, 120), '/dashboard/messages', 'message');
+
+  res.status(201).json({ success: true, message: populated, conversation });
+});
+
+export const markRead = asyncHandler(async (req, res) => {
+  await Message.updateMany(
+    { conversation: req.params.id, readBy: { $ne: req.user._id } },
+    { $addToSet: { readBy: req.user._id } }
+  );
+  res.json({ success: true });
 });
