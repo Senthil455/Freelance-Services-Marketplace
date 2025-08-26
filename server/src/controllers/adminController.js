@@ -24,6 +24,12 @@ export const adminOverview = asyncHandler(async (req, res) => {
     .populate('seller', 'name')
     .lean();
 
+  const ordersByDay = await Order.aggregate([
+    { $match: { createdAt: { $gte: new Date(Date.now() - 13 * 24 * 60 * 60 * 1000) } } },
+    { $group: { _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } }, count: { $sum: 1 }, revenue: { $sum: '$price' } } },
+    { $sort: { _id: 1 } },
+  ]);
+
   res.json({
     success: true,
     stats: {
@@ -34,6 +40,7 @@ export const adminOverview = asyncHandler(async (req, res) => {
       totalRevenue: Math.round((totalRevenueAgg[0] ? totalRevenueAgg[0].total : 0) * 100) / 100,
       activeOrders,
       pendingOrders,
+      ordersByDay,
     },
     recentUsers,
     recentOrders,
@@ -122,4 +129,30 @@ export const adminOrders = asyncHandler(async (req, res) => {
   const total = await Order.countDocuments(conditions);
 
   res.json({ success: true, orders, total, totalPages: Math.ceil(total / limit) || 1, page: Number(page) });
+});
+
+export const adminResolveDispute = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { decision, reason } = req.body;
+  if (!['complete', 'cancel'].includes(decision)) throw new AppError('Decision must be complete or cancel', 400);
+
+  const order = await Order.findById(id);
+  if (!order) throw new AppError('Order not found', 404);
+
+  if (decision === 'complete') {
+    order.status = 'completed';
+    order.completedAt = new Date();
+    order.payoutStatus = 'released';
+  } else {
+    order.status = 'cancelled';
+    order.cancelledAt = new Date();
+    order.cancellationReason = reason || 'Resolved by administrator';
+    order.cancelledBy = 'admin';
+  }
+  await order.save();
+
+  await notify(order.buyer, 'Dispute resolved', 'Order ' + order.orderId + ' was ' + decision + 'ed by an administrator.', '/dashboard/orders/' + order._id, 'order');
+  await notify(order.seller, 'Dispute resolved', 'Order ' + order.orderId + ' was ' + decision + 'ed by an administrator.', '/dashboard/orders/' + order._id, 'order');
+
+  res.json({ success: true, order });
 });
