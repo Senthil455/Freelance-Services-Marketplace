@@ -1,4 +1,6 @@
 import { Server } from 'socket.io';
+import Conversation from '../models/Conversation.js';
+import Message from '../models/Message.js';
 import User from '../models/User.js';
 import { verifyToken } from '../utils/token.js';
 
@@ -30,6 +32,63 @@ export function initSocket(server) {
     const userId = socket.user._id.toString();
     socket.join('user:' + userId);
     onlineUsers.set(userId, socket.id);
+
+    socket.on('join-conversation', (conversationId) => {
+      socket.join('conversation:' + conversationId);
+    });
+
+    socket.on('leave-conversation', (conversationId) => {
+      socket.leave('conversation:' + conversationId);
+    });
+
+    socket.on('send-message', async (payload, ack) => {
+      try {
+        const { conversationId, text } = payload;
+        if (!text || !text.trim()) return ack ? ack({ error: 'Message text is required' }) : undefined;
+
+        const conversation = await Conversation.findById(conversationId);
+        if (!conversation) return ack ? ack({ error: 'Conversation not found' }) : undefined;
+        if (!conversation.participants.some((p) => p.toString() === userId)) {
+          return ack ? ack({ error: 'Not authorized' }) : undefined;
+        }
+
+        const message = await Message.create({
+          conversation: conversation._id,
+          sender: userId,
+          text: text.trim(),
+        });
+
+        conversation.lastMessageAt = new Date();
+        conversation.lastMessagePreview = message.text.slice(0, 80);
+        await conversation.save();
+
+        const populated = await message.populate('sender', 'name avatar');
+        io.to('conversation:' + conversationId).emit('new-message', populated);
+        const otherParty = conversation.participants.find((p) => p.toString() !== userId);
+        io.to('user:' + otherParty).emit('conversation-updated', {
+          conversationId: conversation._id,
+          lastMessagePreview: conversation.lastMessagePreview,
+          lastMessageAt: conversation.lastMessageAt,
+          message: populated,
+        });
+
+        if (ack) ack({ success: true, message: populated });
+      } catch (err) {
+        if (ack) ack({ error: err.message });
+      }
+    });
+
+    socket.on('typing', (conversationId) => {
+      socket.to('conversation:' + conversationId).emit('typing', { conversationId, user: { id: userId, name: socket.user.name } });
+    });
+
+    socket.on('read-messages', async (conversationId) => {
+      await Message.updateMany(
+        { conversation: conversationId, readBy: { $ne: userId } },
+        { $addToSet: { readBy: userId } }
+      );
+      io.to('conversation:' + conversationId).emit('messages-read', { conversationId, user: userId });
+    });
 
     socket.on('disconnect', () => {
       onlineUsers.delete(userId);
