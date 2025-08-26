@@ -30,26 +30,26 @@ export function initSocket(server) {
 
   io.on('connection', (socket) => {
     const userId = socket.user._id.toString();
-    socket.join('user:' + userId);
+    socket.join(`user:${userId}`);
     onlineUsers.set(userId, socket.id);
 
     socket.on('join-conversation', (conversationId) => {
-      socket.join('conversation:' + conversationId);
+      socket.join(`conversation:${conversationId}`);
     });
 
     socket.on('leave-conversation', (conversationId) => {
-      socket.leave('conversation:' + conversationId);
+      socket.leave(`conversation:${conversationId}`);
     });
 
     socket.on('send-message', async (payload, ack) => {
       try {
         const { conversationId, text } = payload;
-        if (!text || !text.trim()) return ack ? ack({ error: 'Message text is required' }) : undefined;
+        if (!text?.trim()) return ack?.({ error: 'Message text is required' });
 
         const conversation = await Conversation.findById(conversationId);
-        if (!conversation) return ack ? ack({ error: 'Conversation not found' }) : undefined;
+        if (!conversation) return ack?.({ error: 'Conversation not found' });
         if (!conversation.participants.some((p) => p.toString() === userId)) {
-          return ack ? ack({ error: 'Not authorized' }) : undefined;
+          return ack?.({ error: 'Not authorized' });
         }
 
         const message = await Message.create({
@@ -63,23 +63,23 @@ export function initSocket(server) {
         await conversation.save();
 
         const populated = await message.populate('sender', 'name avatar');
-        io.to('conversation:' + conversationId).emit('new-message', populated);
-        const otherParty = conversation.participants.find((p) => p.toString() !== userId);
-        io.to('user:' + otherParty).emit('conversation-updated', {
+
+        io.to(`conversation:${conversationId}`).emit('new-message', populated);
+        io.to(`user:${conversation.participants.find((p) => p.toString() !== userId)}`).emit('conversation-updated', {
           conversationId: conversation._id,
           lastMessagePreview: conversation.lastMessagePreview,
           lastMessageAt: conversation.lastMessageAt,
           message: populated,
         });
 
-        if (ack) ack({ success: true, message: populated });
+        ack?.({ success: true, message: populated });
       } catch (err) {
-        if (ack) ack({ error: err.message });
+        ack?.({ error: err.message });
       }
     });
 
     socket.on('typing', (conversationId) => {
-      socket.to('conversation:' + conversationId).emit('typing', { conversationId, user: { id: userId, name: socket.user.name } });
+      socket.to(`conversation:${conversationId}`).emit('typing', { conversationId, user: { id: userId, name: socket.user.name } });
     });
 
     socket.on('read-messages', async (conversationId) => {
@@ -87,7 +87,7 @@ export function initSocket(server) {
         { conversation: conversationId, readBy: { $ne: userId } },
         { $addToSet: { readBy: userId } }
       );
-      io.to('conversation:' + conversationId).emit('messages-read', { conversationId, user: userId });
+      io.to(`conversation:${conversationId}`).emit('messages-read', { conversationId, user: userId });
     });
 
     socket.on('disconnect', () => {
