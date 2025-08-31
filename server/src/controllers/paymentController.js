@@ -42,3 +42,30 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
 
   res.json({ success: true, sandbox: false, clientSecret: intent.client_secret, order });
 });
+
+export const stripeWebhook = asyncHandler(async (req, res) => {
+  if (!stripe || !config.stripeWebhookSecret) {
+    return res.status(400).json({ error: 'Stripe webhook not configured' });
+  }
+
+  const sig = req.headers['stripe-signature'];
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, config.stripeWebhookSecret);
+  } catch (err) {
+    return res.status(400).json({ error: `Webhook signature verification failed: ${err.message}` });
+  }
+
+  if (event.type === 'payment_intent.succeeded') {
+    const intent = event.data.object;
+    const order = await Order.findOne({ stripePaymentIntent: intent.id });
+    if (order && order.status === 'pending') {
+      order.status = 'in_progress';
+      order.deadline = new Date(Date.now() + order.deliveryDays * 24 * 60 * 60 * 1000);
+      await order.save();
+      await notify(order.seller, 'Order started', 'Payment received for ' + order.gigTitle, '/dashboard/orders/' + order._id, 'payment');
+    }
+  }
+
+  res.json({ received: true });
+});
