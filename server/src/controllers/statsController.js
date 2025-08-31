@@ -1,8 +1,25 @@
+import Notification from '../models/Notification.js';
 import Order from '../models/Order.js';
 import Review from '../models/Review.js';
 import Gig from '../models/Gig.js';
 import User from '../models/User.js';
 import { asyncHandler } from '../utils/errors.js';
+
+export const myNotifications = asyncHandler(async (req, res) => {
+  const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50).lean();
+  const unreadCount = await Notification.countDocuments({ user: req.user._id, read: false });
+  res.json({ success: true, notifications, unreadCount });
+});
+
+export const markAllRead = asyncHandler(async (req, res) => {
+  await Notification.updateMany({ user: req.user._id, read: false }, { $set: { read: true } });
+  res.json({ success: true, message: 'All notifications marked as read' });
+});
+
+export const markOneRead = asyncHandler(async (req, res) => {
+  await Notification.updateOne({ _id: req.params.id, user: req.user._id }, { $set: { read: true } });
+  res.json({ success: true });
+});
 
 export const dashboardStats = asyncHandler(async (req, res) => {
   const user = req.user;
@@ -50,12 +67,12 @@ export const dashboardStats = asyncHandler(async (req, res) => {
       activeOrders,
       completed,
       pendingReviews,
-      earnings: Math.round((earningsAgg[0]?.total || 0) * 100) / 100,
-      completedSales: earningsAgg[0]?.count || 0,
-      pendingPayout: Math.round((pendingPayoutAgg[0]?.total || 0) * 100) / 100,
+      earnings: Math.round((earningsAgg[0] ? earningsAgg[0].total : 0) * 100) / 100,
+      completedSales: earningsAgg[0] ? earningsAgg[0].count : 0,
+      pendingPayout: Math.round((pendingPayoutAgg[0] ? pendingPayoutAgg[0].total : 0) * 100) / 100,
       gigCount: sellerGigCount,
-      rating: sellerRating[0]?.avg ? Math.round(sellerRating[0].avg * 10) / 10 : 0,
-      reviewCount: sellerRating[0]?.count || 0,
+      rating: sellerRating[0] && sellerRating[0].avg ? Math.round(sellerRating[0].avg * 10) / 10 : 0,
+      reviewCount: sellerRating[0] ? sellerRating[0].count : 0,
     },
     recentOrders,
   });
