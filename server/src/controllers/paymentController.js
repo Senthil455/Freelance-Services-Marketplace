@@ -21,11 +21,12 @@ export const createPaymentIntent = asyncHandler(async (req, res) => {
   if (order.status !== 'pending') throw new AppError('This order is not pending payment', 400);
 
   if (!stripe) {
+    // Sandbox mode: mark paid immediately without a real payment
     order.status = 'in_progress';
     order.paymentMethod = 'sandbox';
     order.deadline = new Date(Date.now() + order.deliveryDays * 24 * 60 * 60 * 1000);
     await order.save();
-    await notify(order.seller, 'Order started', 'Payment received (sandbox) for ' + order.gigTitle, '/dashboard/orders/' + order._id, 'payment');
+    await notify(order.seller, 'Order started', `Payment received (sandbox) for ${order.gigTitle}`, `/dashboard/orders/${order._id}`, 'payment');
     return res.json({ success: true, sandbox: true, order, clientSecret: null });
   }
 
@@ -63,7 +64,7 @@ export const stripeWebhook = asyncHandler(async (req, res) => {
       order.status = 'in_progress';
       order.deadline = new Date(Date.now() + order.deliveryDays * 24 * 60 * 60 * 1000);
       await order.save();
-      await notify(order.seller, 'Order started', 'Payment received for ' + order.gigTitle, '/dashboard/orders/' + order._id, 'payment');
+      await notify(order.seller, 'Order started', `Payment received for ${order.gigTitle}`, `/dashboard/orders/${order._id}`, 'payment');
     }
   }
 
