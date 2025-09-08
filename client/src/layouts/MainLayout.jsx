@@ -1,17 +1,11 @@
 import { Outlet, Link } from 'react-router-dom';
+import Navbar from '../components/Navbar.jsx';
 import { ShieldCheck } from 'lucide-react';
 
 export default function MainLayout() {
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="border-b border-gray-200 bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/favicon.svg" alt="SkillForge" className="h-8 w-8" />
-            <span className="text-xl font-extrabold tracking-tight text-brand-600">SkillForge</span>
-          </Link>
-        </div>
-      </header>
+      <Navbar />
       <main className="flex-1">
         <Outlet />
       </main>
@@ -39,17 +33,25 @@ function Footer() {
               Payments protected on every order
             </div>
           </div>
+
           <FooterCol
             title="Categories"
-            links={['Programming & Tech', 'Graphic Design', 'Digital Marketing']}
+            links={[
+              'Programming & Tech',
+              'Graphic Design',
+              'Digital Marketing',
+              'Writing & Translation',
+              'Video & Animation',
+              'AI Services',
+            ]}
           />
           <FooterCol
             title="For Freelancers"
-            links={['How it works', 'Become a seller', 'Seller resources']}
+            links={['How it works', 'Become a seller', 'Seller resources', 'Community forum', 'Pricing guide']}
           />
           <FooterCol
             title="Company"
-            links={['About us', 'Careers', 'Press']}
+            links={['About us', 'Careers', 'Press', 'Trust & safety', 'Contact support']}
           />
         </div>
 
@@ -60,6 +62,8 @@ function Footer() {
           <div className="flex gap-6 text-xs font-medium text-gray-500">
             <Link to="/" className="hover:text-brand-600">Terms of Service</Link>
             <Link to="/" className="hover:text-brand-600">Privacy Policy</Link>
+            <Link to="/" className="hover:text-brand-600">Cookie Policy</Link>
+            <Link to="/" className="hover:text-brand-600">Help Center</Link>
           </div>
         </div>
       </div>
