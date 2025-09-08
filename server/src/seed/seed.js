@@ -6,6 +6,8 @@ import Gig from '../models/Gig.js';
 import Order from '../models/Order.js';
 import Review from '../models/Review.js';
 import Category from '../models/Category.js';
+import Conversation from '../models/Conversation.js';
+import Message from '../models/Message.js';
 
 const CATEGORIES = [
   { name: 'Programming & Tech', slug: 'programming-tech', icon: 'code', popular: true, subCategories: ['Web Development', 'Mobile Apps', 'Desktop Apps', 'AI & Machine Learning', 'Data Science', 'API Integration'] },
@@ -191,6 +193,32 @@ async function main() {
       });
     }
   }
+
+  console.log('Creating inbox conversations...');
+  const conv = await Conversation.create({
+    participants: [buyer._id, sellers[0]._id],
+    gig: gigs[0]._id,
+    lastMessageAt: new Date(Date.now() - 3600000),
+    lastMessagePreview: 'Hi! I am interested in your services.',
+  });
+  await Message.create({
+    conversation: conv._id,
+    sender: buyer._id,
+    text: 'Hi! I saw your gig and I am very interested. How soon can you start?',
+  });
+  await Message.create({
+    conversation: conv._id,
+    sender: sellers[0]._id,
+    text: 'Hello! Thanks for reaching out. I can start immediately and deliver within 3 days. What are you building?',
+  });
+
+  const conv2 = await Conversation.create({
+    participants: [buyer._id, sellers[2]._id],
+    lastMessageAt: new Date(Date.now() - 7200000),
+    lastMessagePreview: 'Sounds good — sending the brief now.',
+  });
+  await Message.create({ conversation: conv2._id, sender: sellers[2]._id, text: 'I can help with your SEO campaign. Do you have an analytics setup already?' });
+  await Message.create({ conversation: conv2._id, sender: buyer._id, text: 'Sounds good — sending the brief now.' });
 
   console.log('Done. Summary:');
   console.log('  - Admin:  admin@demo.com / admin12345');
