@@ -1,6 +1,7 @@
 {
   "name": "freelance-services-marketplace",
   "version": "1.0.0",
+  "description": "Production-ready freelance services marketplace (MERN stack)",
   "private": true,
   "scripts": {
     "dev": "concurrently \"npm run dev --prefix server\" \"npm run dev --prefix client\"",
