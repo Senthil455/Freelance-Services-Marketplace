@@ -1,8 +1,19 @@
+import { useEffect } from 'react';
 import { Outlet, Link } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { fetchMe } from '../store/slices/authSlice.js';
+import { useAppDispatch } from '../hooks/useAppDispatch.js';
 import Navbar from '../components/Navbar.jsx';
 import { ShieldCheck } from 'lucide-react';
 
 export default function MainLayout() {
+  const dispatch = useAppDispatch();
+  const { initialized } = useSelector((s) => s.auth);
+
+  useEffect(() => {
+    if (!initialized) dispatch(fetchMe());
+  }, [dispatch, initialized]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
